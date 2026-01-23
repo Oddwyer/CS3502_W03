@@ -4,6 +4,11 @@
 hello
 employee
 logwriter
+producer
+simplepipe
+
+# Test files
+file.txt
 
 # Log files
 *.log
