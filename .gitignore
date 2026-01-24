@@ -7,6 +7,7 @@ logwriter
 producer
 simplepipe
 consumer
+bidirectional
 
 # Test files
 file.txt
