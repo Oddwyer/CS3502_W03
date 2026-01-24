@@ -6,6 +6,7 @@ employee
 logwriter
 producer
 simplepipe
+consumer
 
 # Test files
 file.txt

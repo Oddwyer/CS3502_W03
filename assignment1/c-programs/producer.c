@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
   // when reading in from a file vs stdin, requires getopt() to parse CDL flags.
 
   // needed getopt() variables
-  int opt;
+  int opt =0;
   int buffer_size = 4096; // 4096 by default
   char *filename = NULL;  // no file by default
 
