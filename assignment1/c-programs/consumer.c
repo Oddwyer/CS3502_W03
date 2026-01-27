@@ -61,45 +61,46 @@ int main(int argc, char **argv) {
     }
   }
 
-  while (!shutdown_flag) {
-
-    // reading file from stdin -> does not require f(open)!
-    // fgets(storage location, size of storage, input file)
-    while (fgets(readfile, sizeof(readfile), cfile) != NULL) {
-      // max lines condition
-      if (maxpassed && linecount == maxlines) {
-        break;
-      }
-      // if -v flag,  print to stdout
-      if (verbose) {
-        printf("%s", readfile);
-      }
-      // if new line, count line
-      if (readfile[strlen(readfile) - 1] == '\n') {
-        linecount++;
-      }
-      // count characters
-      charcount += strlen(readfile);
-
-      // SIGUSR1 flag condition
-      if (stats_flag) {
-        printf("Current line count: %d\nCurrent character count: %d\n", linecount, charcount);
-        stats_flag = 0;
-      }
+  // reading file from stdin -> does not require f(open)!
+  // fgets(storage location, size of storage, input file)
+  while (fgets(readfile, sizeof(readfile), cfile) != NULL) {
+    // max lines condition
+    if (maxpassed && linecount == maxlines) {
+      break;
     }
-
-    // if one line of text only (thus no \n), count line
-    if (charcount > 0 && linecount == 0) {
+    // if -v flag,  print to stdout
+    if (verbose) {
+      printf("%s", readfile);
+    }
+    // if new line, count line
+    if (readfile[strlen(readfile) - 1] == '\n') {
       linecount++;
     }
-}
-    // print stats to standard error
-    fprintf(stderr, "Line count: %d\nCharacter count: %d\n", linecount,
-            charcount);
-  
+    // count characters
+    charcount += strlen(readfile);
 
-  printf("Shutting down...");
+    // SIGUSR1 flag condition
+    if (stats_flag) {
+      printf("Current line count: %d\nCurrent character count: %d\n", linecount,
+             charcount);
+      stats_flag = 0;
+    }
+  }
 
+  // if one line of text only (thus no \n), count line
+  if (charcount > 0 && linecount == 0) {
+    linecount++;
+  }
+
+  // print stats to standard error
+  fprintf(stderr, "Line count: %d\nCharacter count: %d\n", linecount,
+          charcount);
+
+  if (shutdown_flag) {
+    fprintf(stderr, "Consumer Graceful Shutdown...\n");
+  } else {
+    printf("Shutting down...");
+  }
   // close file
   fclose(cfile);
 
