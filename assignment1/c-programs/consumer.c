@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
   struct sigaction sa1;
   sa1.sa_handler = handle_sigusr1;
   sigemptyset(&sa1.sa_mask);
-  sa1.sa_flags = 0;
+  sa1.sa_flags = SA_RESTART;
   sigaction(SIGUSR1, &sa1, NULL);
 
   // GETOPT() Method: required to parse CLI flags when reading in from a file
@@ -44,7 +44,7 @@ int main(int argc, char **argv) {
   bool maxpassed = false;
   bool verbose = false;
 
-  // 2.getopt() method
+  // 2. getopt() method
   while ((opt = getopt(argc, argv, "vn:")) !=
          -1) { // note: ":" removed after v if only flag and no argument passed.
     switch (opt) {
@@ -98,9 +98,8 @@ int main(int argc, char **argv) {
 
   if (shutdown_flag) {
     fprintf(stderr, "Consumer Graceful Shutdown...\n");
-  } else {
-    printf("Shutting down...");
-  }
+  } 
+
   // close file
   fclose(cfile);
 

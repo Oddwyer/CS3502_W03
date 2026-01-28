@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 
     // solution for improper line count ensures all data passed to consumer.
     fflush(stdout);
-    sleep(1);
+    //sleep(1);
     if (shutdown_flag) {
       break;
     }
