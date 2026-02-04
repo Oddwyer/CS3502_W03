@@ -33,48 +33,62 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Usage: %s <producer_id> <num_items>\n", argv[0]);
         exit(1);
     }
-    
+
     int producer_id = atoi(argv[1]);
     int num_items = atoi(argv[2]);
-    
+
     // Set up signal handlers
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
-    
+
     // Seed random number generator
     srand(time(NULL) + producer_id);
-    
+
     // TODO: Attach to shared memory
     shm_id = shmget(SHM_KEY, sizeof(shared_buffer_t), IPC_CREAT | 0666)
     shared_buffer_t* ptr = (shared_buffer_t*)shmat(shm_id, NULL, 0);
+
     // TODO: Open semaphores
-    
+    mutex = sem_open("/mutex", O_CREAT, 0644, 1);
+    empty = sem_open("/empty", O_CREAT, 0644, 1);
+    full = sem_open("/full", O_CREAT, 0644, 1);
+
     printf("Producer %d: Starting to produce %d items\n", producer_id, num_items);
-    
+
     // TODO: Main production loop
     for (int i = 0; i < num_items; i++) {
         // Create item
-        item_t item;
-        item.value = producer_id * 1000 + i;
+        item_t item_number = i;
+        item.value = producer_id * 1000 + item_number;
         item.producer_id = producer_id;
-        
+
         // TODO: Wait for empty slot
-        
+        sem_wait(empty);
+
         // TODO: Enter critical section
 
+	sem_wait(mutex);
         // TODO: Add item to buffer
 
-        printf("Producer %d: Produced value %d\n", producer_id, item.value);
-        
+ 	printf("Producer %d: Produced value %d\n", producer_id, item.value);
+
         // TODO: Exit critical section
-        
+	sem_post(mutex);
+
         // TODO: Signal item available
-        
+        sem_post(full);
+
         // Simulate production time
         usleep(rand() % 100000);
     }
-    
+
     printf("Producer %d: Finished producing %d items\n", producer_id, num_items);
     cleanup();
+    // Detach shared memory, close semaphores
+    shmdt(ptr);
+    sem_close(mutex);
+    sem_close(empty);
+    sem_close(full);
+
     return 0;
 }
