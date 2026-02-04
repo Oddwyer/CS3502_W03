@@ -45,7 +45,8 @@ int main(int argc, char* argv[]) {
     srand(time(NULL) + producer_id);
     
     // TODO: Attach to shared memory
-    
+    shm_id = shmget(SHM_KEY, sizeof(shared_buffer_t), IPC_CREAT | 0666)
+    shared_buffer_t* ptr = (shared_buffer_t*)shmat(shm_id, NULL, 0);
     // TODO: Open semaphores
     
     printf("Producer %d: Starting to produce %d items\n", producer_id, num_items);
