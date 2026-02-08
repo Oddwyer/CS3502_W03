@@ -8,6 +8,7 @@ producer
 simplepipe
 consumer
 bidirectional
+*.gch
 
 # Test files
 file.txt
