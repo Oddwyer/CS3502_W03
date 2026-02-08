@@ -4,6 +4,7 @@
 // ============================================
 
 #include "buffer.h"
+#include <errno.h>
 
 // Global variables for cleanup
 shared_buffer_t *buffer = NULL;
@@ -57,15 +58,26 @@ int main(int argc, char *argv[]) {
   srand(time(NULL) + producer_id);
 
   // TODO: Attach to shared memory
-  // Create boolean value to check if created already or not
+  // Create boolean value to check if created already or not. Make an int w/ 0 =
+  // false, non-zero = true
   int created = 0;
-  // Attach to shared memory
-  shm_id = shmget(SHM_KEY, sizeof(shared_buffer_t), IPC_CREAT | IPC_EXCL | 0666);
-  // If newly created, change boolean value
+  // Create/get existing shared memory
+  shm_id =
+      shmget(SHM_KEY, sizeof(shared_buffer_t), IPC_CREAT | IPC_EXCL | 0666);
+  // If shared was created, change boolean value
   if (shm_id >= 0) {
     created = 1;
+  } else {
+    // If not created and shared memory doesn't exist
+    if (errno != EEXIST) {
+      perror("shmget"); // print error reason
+      exit(1);
+    }
+    // If not created but exists, return shm_id for shared memory
+    shm_id = shmget(SHM_KEY, sizeof(shared_buffer_t), 0666);
   }
-  // Point pointer to shared memory location
+
+  // Attach to shared memory location
   buffer = shmat(shm_id, NULL, 0);
 
   // Once shared memory created and pointer set, intialize head, tail, count.

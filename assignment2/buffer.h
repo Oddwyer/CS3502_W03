@@ -35,8 +35,8 @@
 } item_t;
 
 // TODO: Define the shared buffer structure (shared_buffer_t)
-// The buffer should contain:
 typedef struct {
+  // The buffer should contain:
   // - An array of items
   item_t buffer[BUFFER_SIZE];
   // - Variables to track the buffer state (head, tail, count)
