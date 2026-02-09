@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
 
     // TODO: Remove item from buffer
     item_t item = get(buffer);
-    printf("Consumer %d: Consumed item %d from Producer %d\n", consumer_id,
+    printf("Consumer %d: Consumed value %d from Producer %d\n", consumer_id,
            item.value, item.producer_id);
 
     // TODO: Exit critical section
@@ -96,3 +96,4 @@ int main(int argc, char *argv[]) {
   cleanup();
   return 0;
 }
+
