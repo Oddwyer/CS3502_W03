@@ -10,13 +10,13 @@
 #include <time.h>
 #include <unistd.h>
 
-// Configuration - experiment with different values!
+// Configuration
 #define NUM_ACCOUNTS 4
 #define NUM_THREADS 6
 #define TRANSACTIONS_PER_THREAD 10
 #define INITIAL_BALANCE 5000.00
 
-// GIVEN: Updated Account structure with mutex
+// Updated Account structure with mutex
 typedef struct {
   int account_id;
   double balance;
@@ -24,7 +24,7 @@ typedef struct {
   pthread_mutex_t lock; // NEW: Mutex for this account
 } Account;
 
-// GIVEN: Example of mutex initialization
+// Mutex initialization
 void initialize_accounts() {
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
     accounts[i].account_id = i;
@@ -36,10 +36,11 @@ void initialize_accounts() {
   }
 }
 
-// GIVEN: Example deposit function WITH proper protection
+// Deposit function WITH proper protection
 void deposit_safe(int account_id, double amount) {
   // Acquire lock BEFORE accessing shared data
   pthread_mutex_lock(&accounts[account_id].lock);
+
   // ===== CRITICAL SECTION =====
   // Only ONE thread can execute this at a time for this account
   accounts[account_id].balance += amount;
@@ -50,25 +51,21 @@ void deposit_safe(int account_id, double amount) {
   pthread_mutex_unlock(&accounts[account_id].lock);
 }
 
-// TODO 1: Implement withdrawal_safe() with mutex protection
-// Reference: Follow the pattern of deposit_safe() above
-// Remember: lock BEFORE accessing data, unlock AFTER
+// Implement withdrawal_safe() with mutex protection
 void withdrawal_safe(int account_id, double amount) {
-  // YOUR CODE HERE
-  // Hint: pthread_mutex_lock
+  // Acquire lock BEFORE accessing shared data
   pthread_mutex_lock(&accounts[account_id].lock);
+
   // ===== CRITICAL SECTION =====
-  // Hint: Modify balance
   accounts[account_id].balance -= amount;
   accounts[account_id].transaction_count++;
   // ============================
 
-  // Hint: pthread_mutex_unlock
+  // Release lock AFTER modifying shared data
   pthread_mutex_unlock(&accounts[account_id].lock);
 }
 
-// TODO 2: Update teller_thread to use safe functions
-// Change: deposit_unsafe -> deposit_safe
+// Update teller_thread to use safe functions
 void *teller_thread(void *arg) {
   int teller_id = *(int *)arg;
   unsigned int seed = time(NULL) ^ pthread_self();
@@ -79,13 +76,12 @@ void *teller_thread(void *arg) {
 
     // Call appropriate function
     if (operation == 1) {
-     // Change: deposit_unsafe -> deposit_safe
+      // Call deposit_safe
       deposit_safe(account_idx, amount);
       printf("Teller %d: Deposited $%.2f to Account %d\n", teller_id, amount,
              account_idx);
     } else {
       // Call withdrawal_safe
-      // Change: withdrawal_unsafe -> withdrawal_safe
       withdrawal_safe(account_idx, amount);
       printf("Teller %d: Withdrew $%.2f from Account %d\n", teller_id, amount,
              account_idx);
@@ -94,19 +90,82 @@ void *teller_thread(void *arg) {
   return NULL;
 }
 
-// TODO 3: Add performance timing
-// Reference: Section 7.2 "Performance Measurement"
-// Hint: Use clock_gettime(CLOCK_MONOTONIC, &start);
-
-// TODO 4: Add mutex cleanup in main()
-// Reference: man pthread_mutex_destroy
-// Important: Destroy mutexes AFTER all threads complete!
+// Mutex cleanup function
 void cleanup_mutexes() {
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
     pthread_mutex_destroy(&accounts[i].lock);
   }
 }
 
-// TODO 5: Compare Phase 1 vs Phase 2 performance
+// Implement main function
+int main() {
+  printf("=== Phase 1: Race Conditions Demo ===\n\n");
+
+  // Initialize all accounts
+  for (int i = 0; i < NUM_ACCOUNTS; i++) {
+    accounts[i].account_id = i;
+    accounts[i].balance = INITIAL_BALANCE;
+    accounts[i].transaction_count = 0;
+  }
+
+  // Display initial state
+  printf("Initial State:\n");
+  for (int i = 0; i < NUM_ACCOUNTS; i++) {
+    printf("Account %d: $%.2f\n", i, accounts[i].balance);
+  }
+
+  // Calculate expected final balance
+  double expected_total = NUM_ACCOUNTS * INITIAL_BALANCE;
+  printf("\nExpected total: $%.2f\n\n", expected_total);
+
+  // Create thread and thread ID arrays
+  pthread_t threads[NUM_THREADS];
+  int thread_ids[NUM_THREADS];
+
+  // Add performance timing START
+  struct timespec start, end;
+  clock_gettime(CLOCK_MONOTONIC, &start);
+
+  // Create all threads
+  for (int i = 0; i < NUM_THREADS; i++) {
+    // Store ID persistently
+    thread_ids[i] = i;
+    pthread_create(&threads[i], NULL, teller_thread, &thread_ids[i]);
+  }
+
+  // Wait for all threads to complete
+  for (int i = 0; i < NUM_THREADS; i++) {
+    pthread_join(threads[i], NULL);
+  }
+
+  // Add performance timing END
+  clock_gettime(CLOCK_MONOTONIC, &end);
+  double elapsed =
+      (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+  printf("Time: %.4f seconds\n", elapsed);
+
+  // Calculate and display results
+  printf("\n=== Final Results ===\n");
+  double actual_total = 0.0;
+  for (int i = 0; i < NUM_ACCOUNTS; i++) {
+    printf("Account %d: $%.2f (%d transactions)\n", i, accounts[i].balance,
+           accounts[i].transaction_count);
+    actual_total += accounts[i].balance;
+  }
+
+  printf("\nExpected total: $%.2f\n", expected_total);
+  printf("Actual total: $%.2f\n", actual_total);
+  printf("Difference: $%.2f\n", actual_total - expected_total);
+
+  // Race condition detection message
+  if (expected_total != actual_total) {
+    printf("\nRACE CONDITION DETECTED!\n");
+  }
+
+  // Mutex cleanup in main()
+  cleanup_mutexes();
+  return 0;
+}
+
+// Compare Phase 1 vs Phase 2 performance
 // Measure execution time for both versions
-// Document the overhead of synchronization

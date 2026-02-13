@@ -10,13 +10,13 @@
 #include <time.h>
 #include <unistd.h>
 
-// Configuration - experiment with different values!
+// Configuration
 #define NUM_ACCOUNTS 4
 #define NUM_THREADS 6
 #define TRANSACTIONS_PER_THREAD 10
 #define INITIAL_BALANCE 5000.00
 
-// Account data structure ( GIVEN )
+// Account data structure
 typedef struct {
   int account_id;
   double balance;
@@ -26,7 +26,7 @@ typedef struct {
 // Global shared array - THIS CAUSES RACE CONDITIONS!
 Account accounts[NUM_ACCOUNTS];
 
-// GIVEN: Example deposit function WITH race condition
+// Deposit function WITH race condition
 void deposit_unsafe(int account_id, double amount) {
   // READ
   double current_balance = accounts[account_id].balance;
@@ -39,49 +39,40 @@ void deposit_unsafe(int account_id, double amount) {
   accounts[account_id].transaction_count++;
 }
 
-// TODO 1: Implement withdrawal_unsafe() following the same pattern
-// Reference: Copy the structure of deposit_unsafe() above
-// Question: What 's different between deposit and withdrawal?
+// Implement withdrawal_unsafe() following the same pattern
 void withdrawal_unsafe(int account_id, double amount) {
 
-  // Hint: READ current balance
+  // READ current balance
   double current_balance = accounts[account_id].balance;
 
   // MODIFY (simulate processing time)
   usleep(1); // This increases likelihood of race condition!
-  // Hint: SUBTRACT amount instead of add
   double new_balance = current_balance - amount;
 
   // WRITE (another thread might have changed balance between READ and WRITE !)
-  // Hint: WRITE new balance
   accounts[account_id].balance = new_balance;
   accounts[account_id].transaction_count++;
 }
 
-// TODO 2: Implement the thread function
-// Reference: See OSTEP Ch. 27 for pthread function signature
-// Reference: Appendix A.2 for void* parameter explanation
+// Implement the thread function
 void *teller_thread(void *arg) {
-  // GIVEN: Extract thread ID (cast *arg to int via (int *)
+  // Extract thread ID (cast *arg to int via (int *)
   int teller_id = *(int *)arg;
-  // TODO 2a: Initialize thread - safe random seed
-  // Reference: Section 7.2 "Random Numbers per Thread"
+  // Initialize thread - safe random seed
   // The seed ensures each thread experiences a different random history instead
-  // of replaying the same script. Hint: unsigned int seed =
-  // time(NULL)^pthread_self();
+  // of replaying the same script.
   unsigned int seed = time(NULL) ^ pthread_self();
   for (int i = 0; i < TRANSACTIONS_PER_THREAD; i++) {
-    // TODO 2b: Randomly select an account (0 to NUM_ACCOUNTS -1)
-    // Hint: Use rand_r (& seed) % NUM_ACCOUNTS
+    // Randomly select an account (0 to NUM_ACCOUNTS -1)
     int account_idx = rand_r(&seed) % NUM_ACCOUNTS;
-    // TODO 2c: Generate random amount (1-100)
+    // Generate random amount (1-100)
     double amount = (rand_r(&seed) % 100) + 1;
-    // TODO 2d: Randomly choose deposit (1) or withdrawal (0)
-    // Hint: rand_r (&seed) % 2
+    // Randomly choose deposit (1) or withdrawal (0)
     int operation = rand_r(&seed) % 2;
 
-    // TODO 2e: Call appropriate function
+    // Call appropriate function
     if (operation == 1) {
+      // Call deposit_unsafe
       deposit_unsafe(account_idx, amount);
       printf("Teller %d: Deposited $%.2f to Account %d\n", teller_id, amount,
              account_idx);
@@ -95,58 +86,55 @@ void *teller_thread(void *arg) {
   return NULL;
 }
 
-// TODO 3: Implement main function
-// Reference: See pthread_create and pthread_join man pages
+// Implement main function
 int main() {
   printf("=== Phase 1: Race Conditions Demo ===\n\n");
-  // TODO 3a: Initialize all accounts
-  // Hint: Loop through accounts array
-  // Set: account_id = i, balance = INITIAL_BALANCE, transaction_count = 0
+  // Initialize all accounts
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
     accounts[i].account_id = i;
     accounts[i].balance = INITIAL_BALANCE;
     accounts[i].transaction_count = 0;
   }
-  // GIVEN: Display initial state
+  // Display initial state
   printf("Initial State:\n");
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
     printf("Account %d: $%.2f\n", i, accounts[i].balance);
   }
 
-  // TODO 3b: Calculate expected final balance
-  // Question: With random deposits / withdrawals, what should total be?
-  // Hint: Total money in SYSTEM (NOT ACCOUNT) should remain constant!
+  // Calculate expected final balance
   double expected_total = NUM_ACCOUNTS * INITIAL_BALANCE;
   printf("\nExpected total: $%.2f\n\n", expected_total);
 
-  // 3c GIVEN: Create thread and thread ID arrays
-  // Reference: man pthread_create for pthread_t type
+  // Create thread and thread ID arrays
   pthread_t threads[NUM_THREADS];
   int thread_ids[NUM_THREADS];
 
-  // TODO 3d: Create all threads
-  // Reference: man pthread_create | Caution: See Appendix A.2 warning about
-  // passing &i in loop!
+  // Added performance measurements per phase 2 instruction
+  // Start timer
+  struct timespec start, end;
+  clock_gettime(CLOCK_MONOTONIC, &start);
+
+  // Create all threads
   for (int i = 0; i < NUM_THREADS; i++) {
-    // GIVEN: Store ID persistently
+    // Store ID persistently
     thread_ids[i] = i;
-    // YOUR pthread_create CODE HERE
-    // Format: pthread_create (& threads [i], NULL, teller_thread,
-    // &thread_ids[i]);
     pthread_create(&threads[i], NULL, teller_thread, &thread_ids[i]);
   }
 
-  // TODO 3e: Wait for all threads to complete
-  // Reference: man pthread_join
-  // Question: What happens if you skip this step?
+  // Wait for all threads to complete
   for (int i = 0; i < NUM_THREADS; i++) {
-    // YOUR pthread_join CODE HERE.
     // Note: The second parameter is a pointer to the value returned by the
     // function the thread runs. If returns NULL, the value is NULL.
-       pthread_join(threads[i], NULL);
+    pthread_join(threads[i], NULL);
   }
 
-  // TODO 3f: Calculate and display results
+  // End performance measurement timer
+  clock_gettime(CLOCK_MONOTONIC, &end);
+  double elapsed =
+      (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+  printf("Time: %.4f seconds\n", elapsed);
+
+  // Calculate and display results
   printf("\n=== Final Results ===\n");
   double actual_total = 0.0;
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
@@ -159,12 +147,10 @@ int main() {
   printf("Actual total: $%.2f\n", actual_total);
   printf("Difference: $%.2f\n", actual_total - expected_total);
 
-  // TODO 3g: Add race condition detection message
-  // If expected != actual, print "RACE CONDITION DETECTED!"
+  // Race condition detection message
   if (expected_total != actual_total) {
     printf("\nRACE CONDITION DETECTED!\n");
-    // Instruct user to run multiple times
-    printf("Another run recommended.\n");
   }
   return 0;
 }
+
