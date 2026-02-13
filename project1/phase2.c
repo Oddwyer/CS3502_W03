@@ -56,13 +56,43 @@ void deposit_safe(int account_id, double amount) {
 void withdrawal_safe(int account_id, double amount) {
   // YOUR CODE HERE
   // Hint: pthread_mutex_lock
+  pthread_mutex_lock(&accounts[account_id].lock);
+  // ===== CRITICAL SECTION =====
   // Hint: Modify balance
+  accounts[account_id].balance -= amount;
+  accounts[account_id].transaction_count++;
+  // ============================
+
   // Hint: pthread_mutex_unlock
+  pthread_mutex_unlock(&accounts[account_id].lock);
 }
 
 // TODO 2: Update teller_thread to use safe functions
 // Change: deposit_unsafe -> deposit_safe
-// Change: withdrawal_unsafe -> withdrawal_safe
+void *teller_thread(void *arg) {
+  int teller_id = *(int *)arg;
+  unsigned int seed = time(NULL) ^ pthread_self();
+  for (int i = 0; i < TRANSACTIONS_PER_THREAD; i++) {
+    int account_idx = rand_r(&seed) % NUM_ACCOUNTS;
+    double amount = (rand_r(&seed) % 100) + 1;
+    int operation = rand_r(&seed) % 2;
+
+    // Call appropriate function
+    if (operation == 1) {
+     // Change: deposit_unsafe -> deposit_safe
+      deposit_safe(account_idx, amount);
+      printf("Teller %d: Deposited $%.2f to Account %d\n", teller_id, amount,
+             account_idx);
+    } else {
+      // Call withdrawal_safe
+      // Change: withdrawal_unsafe -> withdrawal_safe
+      withdrawal_safe(account_idx, amount);
+      printf("Teller %d: Withdrew $%.2f from Account %d\n", teller_id, amount,
+             account_idx);
+    }
+  }
+  return NULL;
+}
 
 // TODO 3: Add performance timing
 // Reference: Section 7.2 "Performance Measurement"

@@ -1,3 +1,9 @@
+// ======================================
+// CS3502 W03 | Spring 2026
+// Amber O'Dwyer
+// Project 1 - Phase 1
+// ======================================
+
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
