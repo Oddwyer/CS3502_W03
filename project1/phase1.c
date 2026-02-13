@@ -5,10 +5,10 @@
 #include <unistd.h>
 
 // Configuration - experiment with different values!
-#define NUM_ACCOUNTS 2
-#define NUM_THREADS 4
+#define NUM_ACCOUNTS 4
+#define NUM_THREADS 6
 #define TRANSACTIONS_PER_THREAD 10
-#define INITIAL_BALANCE 1000.00
+#define INITIAL_BALANCE 5000.00
 
 // Account data structure ( GIVEN )
 typedef struct {
@@ -56,7 +56,7 @@ void withdrawal_unsafe(int account_id, double amount) {
 // Reference: See OSTEP Ch. 27 for pthread function signature
 // Reference: Appendix A.2 for void* parameter explanation
 void *teller_thread(void *arg) {
-  // GIVEN: Extract thread ID
+  // GIVEN: Extract thread ID (cast *arg to int via (int *)
   int teller_id = *(int *)arg;
   // TODO 2a: Initialize thread - safe random seed
   // Reference: Section 7.2 "Random Numbers per Thread"
@@ -137,7 +137,7 @@ int main() {
     // YOUR pthread_join CODE HERE.
     // Note: The second parameter is a pointer to the value returned by the
     // function the thread runs. If returns NULL, the value is NULL.
-    pthread_join(threads[i], NULL);
+       pthread_join(threads[i], NULL);
   }
 
   // TODO 3f: Calculate and display results

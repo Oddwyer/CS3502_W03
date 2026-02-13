@@ -9,6 +9,7 @@ simplepipe
 consumer
 bidirectional
 *.gch
+phase1
 
 # Test files
 file.txt
