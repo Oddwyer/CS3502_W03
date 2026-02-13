@@ -10,6 +10,7 @@ consumer
 bidirectional
 *.gch
 phase1
+phase2
 
 # Test files
 file.txt

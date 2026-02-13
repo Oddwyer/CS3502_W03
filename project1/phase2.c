@@ -24,6 +24,9 @@ typedef struct {
   pthread_mutex_t lock; // NEW: Mutex for this account
 } Account;
 
+// Global shared array - THIS CAUSES RACE CONDITIONS!
+Account accounts[NUM_ACCOUNTS];
+
 // Mutex initialization
 void initialize_accounts() {
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
