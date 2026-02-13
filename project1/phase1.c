@@ -53,31 +53,36 @@ void withdrawal_unsafe(int account_id, double amount) {
 }
 
 // TODO 2: Implement the thread function
-// Reference : See OSTEP Ch . 27 for pthread function signature
-// Reference : Appendix A .2 for void * parameter explanation
+// Reference: See OSTEP Ch. 27 for pthread function signature
+// Reference: Appendix A.2 for void* parameter explanation
 void *teller_thread(void *arg) {
-  int teller_id = *(int *)arg; // GIVEN : Extract thread ID
-  // TODO 2 a : Initialize thread - safe random seed
-  // Reference : Section 7.2 " Random Numbers per Thread "
-  // Hint : unsigned int seed = time ( NULL ) ^ pthread_self () ;
-  unsigned int seed = /* YOUR CODE HERE */;
+  // GIVEN: Extract thread ID
+  int teller_id = *(int *)arg; 
+  // TODO 2a: Initialize thread - safe random seed
+  // Reference: Section 7.2 "Random Numbers per Thread"
+  // The seed ensures each thread experiences a different random history instead of replaying the same script.
+  // Hint: unsigned int seed = time(NULL)^pthread_self();
+  unsigned int seed = time(NULL)^pthread_self();
   for (int i = 0; i < TRANSACTIONS_PER_THREAD; i++) {
-    // TODO 2 b : Randomly select an account (0 to NUM_ACCOUNTS -1)
-    // Hint : Use rand_r (& seed ) % NUM_ACCOUNTS
-    int account_idx = /* YOUR CODE HERE */;
-    // TODO 2 c : Generate random amount (1 -100)
-    double amount = /* YOUR CODE HERE */;
-    // TODO 2 d : Randomly choose deposit (1) or withdrawal (0)
-    // Hint : rand_r (& seed ) % 2
-    int operation = /* YOUR CODE HERE */;
+    // TODO 2b: Randomly select an account (0 to NUM_ACCOUNTS -1)
+    // Hint: Use rand_r (& seed) % NUM_ACCOUNTS
+    int account_idx = rand_r(&seed) % NUM_ACCOUNTS;
+    // TODO 2c: Generate random amount (1-100)
+    double amount = (rand_r(&seed) % 100) + 1;
+    // TODO 2d: Randomly choose deposit (1) or withdrawal (0)
+    // Hint: rand_r (&seed) % 2
+    int operation = rand_r(&seed) % 2;
 
-    // TODO 2 e : Call appropriate function
+    // TODO 2e: Call appropriate function
     if (operation == 1) {
       deposit_unsafe(account_idx, amount);
       printf(" Teller % d : Deposited $ %.2 f to Account % d \ n ", teller_id,
              amount, account_idx);
     } else {
       // YOUR CODE HERE - call withdrawal_unsafe
+      withdrawal_unsafe(account_idx, amount);
+      printf(" Teller % d : Withdrew $ %.2 f from Account % d \ n ", teller_id,
+             amount, account_idx);
     }
   }
   return NULL;
