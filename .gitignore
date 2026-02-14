@@ -11,6 +11,9 @@ bidirectional
 *.gch
 phase1
 phase2
+phase3
+phase4
+
 
 # Test files
 file.txt
