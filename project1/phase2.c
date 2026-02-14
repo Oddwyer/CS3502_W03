@@ -13,7 +13,7 @@
 // Configuration
 #define NUM_ACCOUNTS 4
 #define NUM_THREADS 6
-#define TRANSACTIONS_PER_THREAD 10
+#define TRANSACTIONS_PER_THREAD 10000
 #define INITIAL_BALANCE 5000.00
 
 // Updated Account structure with mutex

@@ -13,7 +13,7 @@
 // Configuration
 #define NUM_ACCOUNTS 4
 #define NUM_THREADS 6
-#define TRANSACTIONS_PER_THREAD 10
+#define TRANSACTIONS_PER_THREAD 10000
 #define INITIAL_BALANCE 5000.00
 
 // Account data structure
@@ -38,7 +38,7 @@ void deposit_unsafe(int account_id, double amount) {
   // READ
   double current_balance = accounts[account_id].balance;
   // MODIFY (simulate processing time)
-  usleep(1); // This increases likelihood of race condition!
+  // usleep(1); // This increases likelihood of race condition!
   double new_balance = current_balance + amount;
 
   // WRITE (another thread might have changed balance between READ and WRITE!)
@@ -53,7 +53,7 @@ void withdrawal_unsafe(int account_id, double amount) {
   double current_balance = accounts[account_id].balance;
 
   // MODIFY (simulate processing time)
-  usleep(1); // This increases likelihood of race condition!
+  // usleep(1); // This increases likelihood of race condition!
   double new_balance = current_balance - amount;
 
   // WRITE (another thread might have changed balance between READ and WRITE !)
@@ -168,8 +168,11 @@ int main() {
     actual_total += accounts[i].balance;
   }
 
-  printf("\nInitial Balance: $%.2f\n", expected_total);
-  printf("Expected total: $%.2f\n", compute_expected(deposits, withdrawals));
+  printf("\nInitial balance: $%.2f\n", expected_total);
+
+  // New expected total based on random withdrawals/deposits without tranfers.
+  expected_total = compute_expected(deposits, withdrawals);
+  printf("\nExpected total: $%.2f\n", expected_total);
   printf("Actual total: $%.2f\n", actual_total);
   printf("Difference: $%.2f\n", actual_total - expected_total);
 
