@@ -26,6 +26,13 @@ typedef struct {
 // Global shared array - THIS CAUSES RACE CONDITIONS!
 Account accounts[NUM_ACCOUNTS];
 
+// Create thread arrays for deposit/withdrawl totals + initialize all to 0
+// Must keep each thread cummulative deposits/withdraws separate for proper
+// tracking Since we have no tranfer method, deposits/withdrawals could be
+// anything!
+double deposits[NUM_THREADS] = {0};
+double withdrawals[NUM_THREADS] = {0};
+
 // Deposit function WITH race condition
 void deposit_unsafe(int account_id, double amount) {
   // READ
@@ -39,7 +46,7 @@ void deposit_unsafe(int account_id, double amount) {
   accounts[account_id].transaction_count++;
 }
 
-// Implement withdrawal_unsafe() following the same pattern
+// Withdrawal_unsafe() function
 void withdrawal_unsafe(int account_id, double amount) {
 
   // READ current balance
@@ -54,7 +61,7 @@ void withdrawal_unsafe(int account_id, double amount) {
   accounts[account_id].transaction_count++;
 }
 
-// Implement the thread function
+// Teller thread function
 void *teller_thread(void *arg) {
   // Extract thread ID (cast *arg to int via (int *)
   int teller_id = *(int *)arg;
@@ -76,19 +83,37 @@ void *teller_thread(void *arg) {
       deposit_unsafe(account_idx, amount);
       printf("Teller %d: Deposited $%.2f to Account %d\n", teller_id, amount,
              account_idx);
+      deposits[teller_id] += amount;
     } else {
       // Call withdrawal_unsafe
       withdrawal_unsafe(account_idx, amount);
       printf("Teller %d: Withdrew $%.2f from Account %d\n", teller_id, amount,
              account_idx);
+      withdrawals[teller_id] += amount;
     }
   }
   return NULL;
 }
 
-// Implement main function
+// Calculate expected total function
+double compute_expected(double deposits[], double withdrawals[]) {
+  double total_deposits = 0.0;
+  double total_withdrawals = 0.0;
+  double initial_total = NUM_ACCOUNTS * INITIAL_BALANCE;
+
+  for (int i = 0; i < NUM_THREADS; i++) {
+    // Total all deposit/withdrawl amounts
+    total_deposits += deposits[i];
+    total_withdrawals += withdrawals[i];
+  }
+  double expected = initial_total + total_deposits - total_withdrawals;
+  return expected;
+}
+
+// Main function
 int main() {
   printf("=== Phase 1: Race Conditions Demo ===\n\n");
+
   // Initialize all accounts
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
     accounts[i].account_id = i;
@@ -101,7 +126,7 @@ int main() {
     printf("Account %d: $%.2f\n", i, accounts[i].balance);
   }
 
-  // Calculate expected final balance
+  // Calculate initial expected final balance
   double expected_total = NUM_ACCOUNTS * INITIAL_BALANCE;
   printf("\nExpected total: $%.2f\n\n", expected_total);
 
@@ -109,8 +134,8 @@ int main() {
   pthread_t threads[NUM_THREADS];
   int thread_ids[NUM_THREADS];
 
-  // Added performance measurements per phase 2 instruction
-  // Start timer
+  // Add performance measurements per phase 2 instruction
+  // Start
   struct timespec start, end;
   clock_gettime(CLOCK_MONOTONIC, &start);
 
@@ -143,7 +168,8 @@ int main() {
     actual_total += accounts[i].balance;
   }
 
-  printf("\nExpected total: $%.2f\n", expected_total);
+  printf("\nInitial Balance: $%.2f\n", expected_total);
+  printf("Expected total: $%.2f\n", compute_expected(deposits, withdrawals));
   printf("Actual total: $%.2f\n", actual_total);
   printf("Difference: $%.2f\n", actual_total - expected_total);
 
@@ -153,4 +179,3 @@ int main() {
   }
   return 0;
 }
-

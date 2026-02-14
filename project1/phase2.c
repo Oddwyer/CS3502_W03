@@ -27,6 +27,13 @@ typedef struct {
 // Global shared array - THIS CAUSES RACE CONDITIONS!
 Account accounts[NUM_ACCOUNTS];
 
+// Create thread arrays for deposit/withdrawl totals + initialize all to 0
+// Must keep each thread cummulative deposits/withdraws separate for proper
+// tracking Since we have no tranfer method, deposits/withdrawals could be
+// anything!
+double deposits[NUM_THREADS] = {0};
+double withdrawals[NUM_THREADS] = {0};
+
 // Mutex initialization
 void initialize_accounts() {
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
@@ -54,7 +61,7 @@ void deposit_safe(int account_id, double amount) {
   pthread_mutex_unlock(&accounts[account_id].lock);
 }
 
-// Implement withdrawal_safe() with mutex protection
+// Withdrawal_safe() with mutex protection
 void withdrawal_safe(int account_id, double amount) {
   // Acquire lock BEFORE accessing shared data
   pthread_mutex_lock(&accounts[account_id].lock);
@@ -68,7 +75,7 @@ void withdrawal_safe(int account_id, double amount) {
   pthread_mutex_unlock(&accounts[account_id].lock);
 }
 
-// Update teller_thread to use safe functions
+// Updated teller_thread (uses safe functions)
 void *teller_thread(void *arg) {
   int teller_id = *(int *)arg;
   unsigned int seed = time(NULL) ^ pthread_self();
@@ -83,11 +90,13 @@ void *teller_thread(void *arg) {
       deposit_safe(account_idx, amount);
       printf("Teller %d: Deposited $%.2f to Account %d\n", teller_id, amount,
              account_idx);
+      deposits[teller_id] += amount;
     } else {
       // Call withdrawal_safe
       withdrawal_safe(account_idx, amount);
       printf("Teller %d: Withdrew $%.2f from Account %d\n", teller_id, amount,
              account_idx);
+      withdrawals[teller_id] += amount;
     }
   }
   return NULL;
@@ -100,16 +109,27 @@ void cleanup_mutexes() {
   }
 }
 
-// Implement main function
+// Calculate expected total function
+double compute_expected(double deposits[], double withdrawals[]) {
+  double total_deposits = 0.0;
+  double total_withdrawals = 0.0;
+  double initial_total = NUM_ACCOUNTS * INITIAL_BALANCE;
+
+  for (int i = 0; i < NUM_THREADS; i++) {
+    // Total all deposit/withdrawl amounts
+    total_deposits += deposits[i];
+    total_withdrawals += withdrawals[i];
+  }
+  double expected = initial_total + total_deposits - total_withdrawals;
+  return expected;
+}
+
+// Main function
 int main() {
-  printf("=== Phase 1: Race Conditions Demo ===\n\n");
+  printf("=== Phase 2: Mutex Protection Demo ===\n\n");
 
   // Initialize all accounts
-  for (int i = 0; i < NUM_ACCOUNTS; i++) {
-    accounts[i].account_id = i;
-    accounts[i].balance = INITIAL_BALANCE;
-    accounts[i].transaction_count = 0;
-  }
+  initialize_accounts();
 
   // Display initial state
   printf("Initial State:\n");
@@ -117,7 +137,7 @@ int main() {
     printf("Account %d: $%.2f\n", i, accounts[i].balance);
   }
 
-  // Calculate expected final balance
+  // Calculate INITIAL  expected final balance
   double expected_total = NUM_ACCOUNTS * INITIAL_BALANCE;
   printf("\nExpected total: $%.2f\n\n", expected_total);
 
@@ -156,6 +176,10 @@ int main() {
     actual_total += accounts[i].balance;
   }
 
+  printf("\nInitial balance: $%.2f\n", expected_total);
+
+  // New expected total based on random withdrawals/deposits without tranfers.
+  expected_total = compute_expected(deposits, withdrawals);
   printf("\nExpected total: $%.2f\n", expected_total);
   printf("Actual total: $%.2f\n", actual_total);
   printf("Difference: $%.2f\n", actual_total - expected_total);
