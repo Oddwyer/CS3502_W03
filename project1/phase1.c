@@ -137,9 +137,9 @@ int main() {
 
   // End performance measurement timer
   clock_gettime(CLOCK_MONOTONIC, &end);
- // double elapsed =
- //     (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
- // printf("Time: %.4f seconds\n", elapsed);
+  double elapsed =
+      (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+  printf("Time: %.4f seconds\n", elapsed);
 
   // Calculate and display results
   printf("\n=== Final Results ===\n");
