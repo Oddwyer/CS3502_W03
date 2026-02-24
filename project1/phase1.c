@@ -13,7 +13,7 @@
 // Configuration
 #define NUM_ACCOUNTS 4
 #define NUM_THREADS 6
-#define TRANSACTIONS_PER_THREAD 10000
+#define TRANSACTIONS_PER_THREAD 10
 #define INITIAL_BALANCE 5000.00
 
 // Account data structure
@@ -26,21 +26,13 @@ typedef struct {
 // Global shared array - THIS CAUSES RACE CONDITIONS!
 Account accounts[NUM_ACCOUNTS];
 
-// Create thread arrays for deposit/withdrawl totals + initialize all to 0
-// Must keep each thread cummulative deposits/withdraws separate for proper
-// tracking Since we have no tranfer method, deposits/withdrawals could be
-// anything!
-double deposits[NUM_THREADS] = {0};
-double withdrawals[NUM_THREADS] = {0};
-
 // Deposit function WITH race condition
 void deposit_unsafe(int account_id, double amount) {
   // READ
   double current_balance = accounts[account_id].balance;
   // MODIFY (simulate processing time)
-  // usleep(1); // This increases likelihood of race condition!
+  usleep(1); // This increases likelihood of race condition!
   double new_balance = current_balance + amount;
-
   // WRITE (another thread might have changed balance between READ and WRITE!)
   accounts[account_id].balance = new_balance;
   accounts[account_id].transaction_count++;
@@ -53,7 +45,7 @@ void withdrawal_unsafe(int account_id, double amount) {
   double current_balance = accounts[account_id].balance;
 
   // MODIFY (simulate processing time)
-  // usleep(1); // This increases likelihood of race condition!
+  usleep(1); // This increases likelihood of race condition!
   double new_balance = current_balance - amount;
 
   // WRITE (another thread might have changed balance between READ and WRITE !)
@@ -71,7 +63,9 @@ void *teller_thread(void *arg) {
   unsigned int seed = time(NULL) ^ pthread_self();
   for (int i = 0; i < TRANSACTIONS_PER_THREAD; i++) {
     // Randomly select an account (0 to NUM_ACCOUNTS -1)
-    int account_idx = rand_r(&seed) % NUM_ACCOUNTS;
+    int from_account = rand_r(&seed) % NUM_ACCOUNTS;
+    int to_account = rand_r(&seed) % NUM_ACCOUNTS;
+
     // Generate random amount (1-100)
     double amount = (rand_r(&seed) % 100) + 1;
     // Randomly choose deposit (1) or withdrawal (0)
@@ -79,36 +73,23 @@ void *teller_thread(void *arg) {
 
     // Call appropriate function
     if (operation == 1) {
-      // Call deposit_unsafe
-      deposit_unsafe(account_idx, amount);
+      // Call deposit_unsafe (transferring via withdrawal)
+      deposit_unsafe(to_account, amount);
       printf("Teller %d: Deposited $%.2f to Account %d\n", teller_id, amount,
-             account_idx);
-      deposits[teller_id] += amount;
+             to_account);
+      withdrawal_unsafe(from_account, amount);
+
     } else {
-      // Call withdrawal_unsafe
-      withdrawal_unsafe(account_idx, amount);
+      // Call withdrawal_unsafe (transferring via desposit)
+      withdrawal_unsafe(from_account, amount);
       printf("Teller %d: Withdrew $%.2f from Account %d\n", teller_id, amount,
-             account_idx);
-      withdrawals[teller_id] += amount;
+             from_account);
+      deposit_unsafe(to_account, amount);
     }
   }
   return NULL;
 }
 
-// Calculate expected total function
-double compute_expected(double deposits[], double withdrawals[]) {
-  double total_deposits = 0.0;
-  double total_withdrawals = 0.0;
-  double initial_total = NUM_ACCOUNTS * INITIAL_BALANCE;
-
-  for (int i = 0; i < NUM_THREADS; i++) {
-    // Total all deposit/withdrawl amounts
-    total_deposits += deposits[i];
-    total_withdrawals += withdrawals[i];
-  }
-  double expected = initial_total + total_deposits - total_withdrawals;
-  return expected;
-}
 
 // Main function
 int main() {
@@ -120,6 +101,7 @@ int main() {
     accounts[i].balance = INITIAL_BALANCE;
     accounts[i].transaction_count = 0;
   }
+
   // Display initial state
   printf("Initial State:\n");
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
@@ -155,23 +137,20 @@ int main() {
 
   // End performance measurement timer
   clock_gettime(CLOCK_MONOTONIC, &end);
-  double elapsed =
-      (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
-  printf("Time: %.4f seconds\n", elapsed);
+ // double elapsed =
+ //     (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+ // printf("Time: %.4f seconds\n", elapsed);
 
   // Calculate and display results
   printf("\n=== Final Results ===\n");
   double actual_total = 0.0;
+
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
     printf("Account %d: $%.2f (%d transactions)\n", i, accounts[i].balance,
            accounts[i].transaction_count);
     actual_total += accounts[i].balance;
   }
 
-  printf("\nInitial balance: $%.2f\n", expected_total);
-
-  // New expected total based on random withdrawals/deposits without tranfers.
-  expected_total = compute_expected(deposits, withdrawals);
   printf("\nExpected total: $%.2f\n", expected_total);
   printf("Actual total: $%.2f\n", actual_total);
   printf("Difference: $%.2f\n", actual_total - expected_total);
