@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 // Configuration
 #define NUM_ACCOUNTS 2
@@ -199,7 +201,3 @@ int main() {
   cleanup_mutexes();
   return 0;
 }
-
-// TODO 4: Document the Coffman conditions
-// In your report , identify WHERE each condition occurs
-// Create resource allocation graph showing circular wait

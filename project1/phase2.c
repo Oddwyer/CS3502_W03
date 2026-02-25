@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 // Configuration
 #define NUM_ACCOUNTS 4
