@@ -2,6 +2,12 @@
 // CS3502 W03 | Spring 2026
 // Amber O'Dwyer
 // Project 1 - Phase 3
+
+// AI Assistance Disclosure:
+// ChatGPT (OpenAI, personal communication, February 25, 2026) was used
+// for conceptual clarification regarding pthread usage, deadlock vs.
+// livelock distinctions, and Makefile structure. All implementation
+// decisions and final code reflect my own understanding.
 // ======================================
 
 #include <pthread.h>
