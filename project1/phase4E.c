@@ -1,7 +1,7 @@
 // ======================================
 // CS3502 W03 | Spring 2026
 // Amber O'Dwyer
-// Project 1 - Phase 4: Strategy 1
+// Project 1 - Phase 4: Strategy 3
 
 // AI Assistance Disclosure:
 // ChatGPT (OpenAI, personal communication, February 25, 2026) was used for high-level
@@ -61,63 +61,69 @@ void initialize_accounts() {
   }
 }
 
-// Transfer function w/ STRATEGY 1: Lock Ordering (RECOMMENDED)
-void safe_transfer_ordered(int from_id, int to_id, double amount, int thread_id) {
-  // ALGORITHM: To prevent circular wait, always acquire locks in consistent order
-  // Step 1: Identify which account ID is first (lower)
-  int first = 0;
-  int second = 0;
-  if (from_id < to_id) {
-    first = from_id;
-    second = to_id;
-  } else {
-    second = from_id;
-    first = to_id;
-  }
+// Transfer function w/ STRATEGY 3: Trylock w/ Backoff
+void safe_transfer_trylock(transfer_args *args) {
+  int from_id = args->from_id;
+  int to_id = args->to_id;
+  double amount = args->amount;
+  int thread_id = args->thread_id;
 
-  // WHY THIS WORKS:
-  // - Thread 1: transfer (0 ,1) locks 0 then 1
-  // - Thread 2: transfer (1 ,0) locks 0 then 1 (SAME ORDER!)
-  // - No circular wait (Coffman 4) possible
+  int attempts = 0;
+  // ALGORITHM: Use non-blocking trylock; back off and retry if fails
+  unsigned int seed = time(NULL) ^ pthread_self();
 
-  // Step 2: Lock first ID account -> Coffman 1: mutual exclusion
-  pthread_mutex_lock(&accounts[first].lock);
-  printf("Thread %d: Locked account %d\n", thread_id, first);
-
-  // Simulate processing delay
-  // usleep(100);
-
-  // Step 3: Try to lock destination (second) account
-  // Coffman 2: hold-and-wait (first lock held)
-  // Coffman 3: no preemption (no force release of first lock)
-  printf("Thread %d: Waiting for account %d\n", thread_id, second);
-  pthread_mutex_lock(&accounts[second].lock);
-
-  // Step 4: Perform transfer
-  // Balance checking + error handling
-  if (accounts[from_id].balance < amount) {
-    printf("Insufficient funds for transfer.");
-  } else {
-    accounts[from_id].balance -= amount;
-    accounts[from_id].transaction_count++;
-    accounts[to_id].balance += amount;
-    accounts[to_id].transaction_count++;
+  while (1) {
     attempts++;
-  }
+    // Step 1: pthread_mutex_trylock on first account
+    if(pthread_mutex_trylock(&accounts[from_id].lock) != 0) {
+      // Step 2: If fails, usleep (random time) and retry
+      // Addresses Coffman 2 (hold-and-wait) and 3 (no preemption)
+      int time = rand_r(&seed) % 200;
+      usleep(time);
+      continue;
+    }
 
-  // Step 5: Try to unlock in reverse order
-  pthread_mutex_unlock(&accounts[second].lock);
-  pthread_mutex_unlock(&accounts[first].lock);
+    printf("Thread %d: Locked account %d\n", thread_id, from_id);
+    printf("Thread %d: Waiting for account %d\n", thread_id, to_id);
+
+    // Step 3: pthread_mutex_trylock on second account
+    if(pthread_mutex_trylock(&accounts[to_id].lock) != 0) {
+      // Step 4: If fails, release first, usleep, retry
+      pthread_mutex_unlock(&accounts[from_id].lock);
+      int time = rand_r(&seed) % 200;
+      usleep(time);
+      continue;
+    }
+
+    // Simulate processing delay
+    // usleep(100);
+
+    // Transfer (never reached if deadlocked)
+    // Balance checking + error handling
+    if (accounts[from_id].balance < amount) {
+      printf("Insufficient funds for transfer.");
+    }
+    else {
+      accounts[from_id].balance -= amount;
+      accounts[from_id].transaction_count++;
+      accounts[to_id].balance += amount;
+      accounts[to_id].transaction_count++;
+    }
+
+    // Try to release locks
+    pthread_mutex_unlock(&accounts[to_id].lock);
+    pthread_mutex_unlock(&accounts[from_id].lock);
+    args->attempts = attempts;
+    return;
+  }
 }
 
 // transfer_thread outer function
 void *transfer_thread(void *arg) {
   // Cast from void to transfer_args
   transfer_args *args = (transfer_args *)arg;
-  // attempts (should be successful each try)
-  args->attempts += 1;
   // Pass to deadlock function
-  safe_transfer_ordered(args->from_id, args->to_id, args->amount, args->thread_id);
+  safe_transfer_trylock(args);
   return NULL;
 }
 
@@ -130,7 +136,7 @@ void cleanup_mutexes() {
 
 // =====================Main Function=========================
 int main() {
-  printf("=== Phase 4: Deadlock Resolution - Lock Ordering ===\n\n");
+  printf("=== Phase 4: Deadlock Resolution - Trylock ===\n\n");
 
   // Initialize all accounts
   initialize_accounts();
@@ -218,6 +224,7 @@ int main() {
            accounts[i].transaction_count);
     actual_total += accounts[i].balance;
   }
+
 
   printf("\nExpected total: $%.2f\n", expected_total);
   printf("Actual total: $%.2f\n", actual_total);
