@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -pthread
 
-all: phase1 phase2 phase3 phase4
+all: phase1 phase2 phase3 phase4 phase4E
 
 phase1: phase1.c
 	$(CC) $(CFLAGS) phase1.c -o phase1
@@ -15,5 +15,8 @@ phase3: phase3.c
 phase4: phase4.c
 	$(CC) $(CFLAGS) phase4.c -o phase4
 
+phase4E: phase4E.c
+	$(CC) $(CFLAGS) phase4E.c -o phase4E
+
 clean:
-	rm -f phase1 phase2 phase3 phase4
+	rm -f phase1 phase2 phase3 phase4 phase4E
