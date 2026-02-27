@@ -4,12 +4,14 @@
 // Project 1 - Phase 4: Strategy 3
 
 // AI Assistance Disclosure:
-// ChatGPT (OpenAI, personal communication, February 25, 2026) was used for high-level
-// conceptual clarification regarding:
-// - pthread behavior
-// - deadlock prevention strategies (e.g., lock ordering)
-// - proper resource-handling practices (e.g., malloc and thread error checks).
-// All implementation logic, design, and final code reflect my own understanding.
+// ChatGPT (OpenAI, personal communication, February 2026) was used for
+// high-level conceptual clarification regarding:
+// - pthread trylock behavior
+// - livelock vs. deadlock distinctions
+// - retry-loop structure and pointer semantics in C.
+// All algorithm design decisions, implementation details, debugging,
+// performance instrumentation, and final code reflect my independent
+// understanding and authorship.
 // ======================================
 
 #include <pthread.h>
