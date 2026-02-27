@@ -4,10 +4,12 @@
 // Project 1 - Phase 3
 
 // AI Assistance Disclosure:
-// ChatGPT (OpenAI, personal communication, February 25, 2026) was used
-// for conceptual clarification regarding pthread usage, deadlock vs.
-// livelock distinctions, and Makefile structure. All implementation
-// decisions and final code reflect my own understanding.
+// ChatGPT (OpenAI, personal communication, February 25, 2026) was used for
+// conceptual clarification regarding:
+// - pthread usage
+// - deadlock vs. livelock distinctions
+// - Makefile structure.
+// All implementation logic, design, and final code reflect my own understanding.
 // ======================================
 
 #include <pthread.h>
@@ -74,12 +76,13 @@ void transfer_deadlock_example(int from_id, int to_id, double amount, int thread
 
   // Transfer (never reached if deadlocked)
   // Balance checking + error handling
-  if (accounts[from_id].balance <= 0) {
+  if (accounts[from_id].balance < amount) {
     printf("Insufficient funds for transfer.");
-    return;
   } else {
     accounts[from_id].balance -= amount;
+    accounts[from_id].transaction_count++;
     accounts[to_id].balance += amount;
+    accounts[to_id].transaction_count++;
   }
 
   // Try to release locks
@@ -100,6 +103,7 @@ void *transfer_thread(void *arg) {
 
 // timer_thread function
 void *timer_thread(void *arg) {
+  (void)arg; // NULL param passed
   sleep(5); // sleep 5 seconds
   return NULL;
 }

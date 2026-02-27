@@ -5,9 +5,9 @@
 
 // AI Assistance Disclosure:
 // ChatGPT (OpenAI, personal communication, February 24, 2026) was used
-// for conceptual clarification regarding pthread usage and error handling
-// patterns. All implementation decisions and final code reflect my own
-// understanding.
+// for conceptual clarification regarding:
+// - pthread usage and error handling patterns.
+// All implementation, design, and code reflect my own understanding.
 // ======================================
 
 #include <pthread.h>

@@ -5,9 +5,10 @@
 
 // AI Assistance Disclosure:
 // ChatGPT (OpenAI, personal communication, February 24, 2026) was used
-// for conceptual clarification regarding pthread usage and transfer vs
-// transaction count logic. All implementation decisions and final code
-// reflect my own understanding.
+// for conceptual clarification regarding:
+// - pthread usage
+// - transfer vs transaction count logic.
+// All implementation, design, and final code reflect my own understanding.
 // ======================================
 
 #include <pthread.h>

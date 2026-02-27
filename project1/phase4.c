@@ -4,10 +4,12 @@
 // Project 1 - Phase 4
 
 // AI Assistance Disclosure:
-// ChatGPT (OpenAI, personal communication, February 25, 2026) was used
-// for conceptual clarification regarding pthread usage, deadlock vs.
-// livelock distinctions, and Makefile structure. All implementation
-// decisions and final code reflect my own understanding.
+// ChatGPT (OpenAI, personal communication, February 25, 2026) was used for high-level
+// conceptual clarification regarding:
+// - pthread behavior
+// - deadlock prevention strategies (e.g., lock ordering)
+// - proper resource-handling practices (e.g., malloc and thread error checks).
+// All implementation logic, design, and final code reflect my own understanding.
 // ======================================
 
 #include <pthread.h>
@@ -23,6 +25,7 @@
 #define INITIAL_BALANCE 5000.00
 // Unused: #define NUM_THREADS 2
 // Unused: #define TRANSACTIONS_PER_THREAD 10
+
 
 // Updated Account structure with mutex
 typedef struct {
@@ -86,16 +89,17 @@ void safe_transfer_ordered(int from_id, int to_id, double amount, int thread_id)
   // Coffman 2: hold-and-wait (first lock held)
   // Coffman 3: no preemption (no force release of first lock)
   printf("Thread %d: Waiting for account %d\n", thread_id, second);
-  pthread_mutex_lock(&accounts[second].lock); // DEADLOCK HERE!
+  pthread_mutex_lock(&accounts[second].lock);
 
   // Step 4: Perform transfer
   // Balance checking + error handling
-  if (accounts[from_id].balance <= 0) {
+  if (accounts[from_id].balance < amount) {
     printf("Insufficient funds for transfer.");
-    return;
   } else {
     accounts[from_id].balance -= amount;
+    accounts[from_id].transaction_count++;
     accounts[to_id].balance += amount;
+    accounts[to_id].transaction_count++;
   }
 
   // Step 5: Try to unlock in reverse order
@@ -114,32 +118,12 @@ void *transfer_thread(void *arg) {
   return NULL;
 }
 
-// timer_thread function
-void *timer_thread(void *arg) {
-  sleep(5); // sleep 5 seconds
-  return NULL;
-}
-
-// Unused: teller_thread function
-// void *teller_thread(void *arg) {
-//   int teller_id = *(int *)arg;
-//   unsigned int seed = time(NULL) ^ pthread_self();
-//   for (int i = 0; i < TRANSACTIONS_PER_THREAD; i++) {
-//     int from_account = rand_r(&seed) % NUM_ACCOUNTS;
-//     int to_account = rand_r(&seed) % NUM_ACCOUNTS;
-//     double amount = (rand_r(&seed) % 100) + 1;
-//     int operation = rand_r(&seed) % 2;
-//  }
-//  return NULL;
-//}
-
 // Mutex cleanup function
 void cleanup_mutexes() {
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
     pthread_mutex_destroy(&accounts[i].lock);
   }
 }
-
 
 // =====================Main Function=========================
 int main() {
@@ -158,45 +142,46 @@ int main() {
   double expected_total = NUM_ACCOUNTS * INITIAL_BALANCE;
   printf("\nExpected total: $%.2f\n\n", expected_total);
 
-  // Unused: Create thread and thread ID arrays
-  // pthread_t threads[NUM_THREADS];
-  // int thread_ids[NUM_THREADS];
-  
-    // Thread 1 creation: transfer(0, 1, amount)
-    pthread_t thread1;
-    transfer_args *args1 = malloc(sizeof(*args1));
-    unsigned int seed = time(NULL) ^ 1;
-    double amount = (rand_r(&seed) % 100) + 1;
+  // Thread 1 creation: transfer(0, 1, amount)
+  pthread_t thread1;
+  transfer_args *args1 = malloc(sizeof(*args1));
+  // Error handling: confirming memory space exists on heap -> did not return null
+  if (args1 == NULL) {
+    perror("malloc failed");
+    exit(1); //abnormal exit
+  }
 
-    args1->from_id = 0;
-    args1->to_id = 1;
-    args1->amount = amount;
-    args1->thread_id = 1;
-    pthread_create(&thread1, NULL, transfer_thread, args1);
+  unsigned int seed = time(NULL) ^ 1;
+  double amount = (rand_r(&seed) % 100) + 1;
 
-    // Thread 2 creation: transfer(1, 0, amount)
-    pthread_t thread2;
-    transfer_args *args2 = malloc(sizeof(*args2));
-    seed = time(NULL) ^ 2;
-    amount = (rand_r(&seed) % 100) + 1;
+  args1->from_id = 0;
+  args1->to_id = 1;
+  args1->amount = amount;
+  args1->thread_id = 1;
+  pthread_create(&thread1, NULL, transfer_thread, args1);
 
-    args2->from_id = 1;
-    args2->to_id = 0;
-    args2->amount = amount;
-    args2->thread_id = 2;
-    pthread_create(&thread2, NULL, transfer_thread, args2);
+  // Thread 2 creation: transfer(1, 0, amount)
+  pthread_t thread2;
+  transfer_args *args2 = malloc(sizeof(*args2));
 
-  // Implement deadlock detection
-  // Add timeout counter in main() -> via timeout thread
-  pthread_t timeout;
-  pthread_create(&timeout, NULL, timer_thread, NULL);
+  // Error handling: confirming memory space exists on heap -> did not return null
+  if (args2 == NULL) {
+    perror("malloc failed");
+    exit(1); //abnormal exit
+  }
 
-  // Wait for timeout thread to complete only; other threads will never complete.
-  pthread_join(timeout, NULL);
-  // After 5 seconds, announce deadlock suspected
-  printf("5 seconds has lapsed. Deadlock suspected.\n");
-  // exit(1) = abnormal termination due to deadlock
-  exit(1);
+  seed = time(NULL) ^ 2;
+  amount = (rand_r(&seed) % 100) + 1;
+
+  args2->from_id = 1;
+  args2->to_id = 0;
+  args2->amount = amount;
+  args2->thread_id = 2;
+  pthread_create(&thread2, NULL, transfer_thread, args2);
+
+  // Wait for transfer threads to complete.
+  pthread_join(thread1, NULL);
+  pthread_join(thread2, NULL);
 
   // Calculate and display results
   printf("\n=== Final Results ===\n");
@@ -210,11 +195,6 @@ int main() {
   printf("\nExpected total: $%.2f\n", expected_total);
   printf("Actual total: $%.2f\n", actual_total);
   printf("Difference: $%.2f\n", actual_total - expected_total);
-
-  // Race condition detection message
-  if (expected_total != actual_total) {
-    printf("\nRACE CONDITION DETECTED!\n");
-  }
 
   // Mutex cleanup in main()
   cleanup_mutexes();
