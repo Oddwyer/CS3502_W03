@@ -108,26 +108,12 @@ void *timer_thread(void *arg) {
   return NULL;
 }
 
-// Unused: teller_thread function
-// void *teller_thread(void *arg) {
-//   int teller_id = *(int *)arg;
-//   unsigned int seed = time(NULL) ^ pthread_self();
-//   for (int i = 0; i < TRANSACTIONS_PER_THREAD; i++) {
-//     int from_account = rand_r(&seed) % NUM_ACCOUNTS;
-//     int to_account = rand_r(&seed) % NUM_ACCOUNTS;
-//     double amount = (rand_r(&seed) % 100) + 1;
-//     int operation = rand_r(&seed) % 2;
-//  }
-//  return NULL;
-//}
-
 // Mutex cleanup function
 void cleanup_mutexes() {
   for (int i = 0; i < NUM_ACCOUNTS; i++) {
     pthread_mutex_destroy(&accounts[i].lock);
   }
 }
-
 
 // =====================Main Function=========================
 int main() {
@@ -146,36 +132,46 @@ int main() {
   double expected_total = NUM_ACCOUNTS * INITIAL_BALANCE;
   printf("\nExpected total: $%.2f\n\n", expected_total);
 
-  // Unused: Create thread and thread ID arrays
-  // pthread_t threads[NUM_THREADS];
-  // int thread_ids[NUM_THREADS];
-
   // Create threads that will deadlock. Result: Circular wait!
-    // Thread 1: transfer(0, 1, amount) // Locks 0, wants 1
-    pthread_t thread1;
-    transfer_args *args1 = malloc(sizeof(*args1));
-    unsigned int seed = time(NULL) ^ 1;
-    double amount = (rand_r(&seed) % 100) + 1;
+  // Thread 1: transfer(0, 1, amount) // Locks 0, wants 1
+  pthread_t thread1;
+  transfer_args *args1 = malloc(sizeof(*args1));
 
-    // Coffman 4: circular wait -> Thread 1 waits for Thread 2
-    args1->from_id = 0;
-    args1->to_id = 1;
-    args1->amount = amount;
-    args1->thread_id = 1;
-    pthread_create(&thread1, NULL, transfer_thread, args1);
+  // Error handling: confirming memory space exists on heap -> did not return null
+  if (args1 == NULL) {
+    perror("malloc failed");
+    exit(1); //abnormal exit
+  }
 
-    // Thread 2: transfer(1, 0, amount) // Locks 1, wants 0
-    pthread_t thread2;
-    transfer_args *args2 = malloc(sizeof(*args2));
-    seed = time(NULL) ^ 2;
-    amount = (rand_r(&seed) % 100) + 1;
+  unsigned int seed = time(NULL) ^ 1;
+  double amount = (rand_r(&seed) % 100) + 1;
 
-    // Coffman 4 continued: circular wait -> Thread 2 waits for Thread 1
-    args2->from_id = 1;
-    args2->to_id = 0;
-    args2->amount = amount;
-    args2->thread_id = 2;
-    pthread_create(&thread2, NULL, transfer_thread, args2);
+  // Coffman 4: circular wait -> Thread 1 waits for Thread 2
+  args1->from_id = 0;
+  args1->to_id = 1;
+  args1->amount = amount;
+  args1->thread_id = 1;
+  pthread_create(&thread1, NULL, transfer_thread, args1);
+
+  // Thread 2: transfer(1, 0, amount) // Locks 1, wants 0
+  pthread_t thread2;
+  transfer_args *args2 = malloc(sizeof(*args2));
+
+  // Error handling: confirming memory space exists on heap -> did not return null
+  if (args2 == NULL) {
+    perror("malloc failed");
+    exit(1); //abnormal exit
+  }
+
+  seed = time(NULL) ^ 2;
+  amount = (rand_r(&seed) % 100) + 1;
+
+  // Coffman 4 continued: circular wait -> Thread 2 waits for Thread 1
+  args2->from_id = 1;
+  args2->to_id = 0;
+  args2->amount = amount;
+  args2->thread_id = 2;
+  pthread_create(&thread2, NULL, transfer_thread, args2);
 
   // Implement deadlock detection
   // Add timeout counter in main() -> via timeout thread
@@ -201,11 +197,6 @@ int main() {
   printf("\nExpected total: $%.2f\n", expected_total);
   printf("Actual total: $%.2f\n", actual_total);
   printf("Difference: $%.2f\n", actual_total - expected_total);
-
-  // Race condition detection message
-  if (expected_total != actual_total) {
-    printf("\nRACE CONDITION DETECTED!\n");
-  }
 
   // Mutex cleanup in main()
   cleanup_mutexes();
