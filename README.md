@@ -12,18 +12,18 @@ Operating Systems Coursework:
   - This project uses a Makefile to compile each phase of the assignment. 
   - From the command line:
       ```bash
-      - git clone https://github.com/Oddwyer/CS3502_W03.git
-      - cd CS3502_W03/project1
-      - make
+      git clone https://github.com/Oddwyer/CS3502_W03.git
+      cd CS3502_W03/project1
+      make
       ```
-  - This compiles all phases using:
+  - This compiles all phase1, phase2, phase3, phase4 and phase4E using:
       ```bash
       gcc -Wall -Wextra -pthread phaseX.c -o phaseX
       ```
-      - Where X corresponds to the phase number (1–4).
+      - Where X corresponds to the phase number (1–4), and phase4E.
     
   - To clean compiled binaries:
-     ```bash	
+     ```bash
       make clean
      ```
 - Run Instructions: 
@@ -37,7 +37,10 @@ Operating Systems Coursework:
     ```
     - It is recommended to run multiple times to observe thread scheduling differences and contention behavior.
 
-
+- Dependencies:
+  - GCC 
+  - POSIX threads (pthread)
+  - Linux/Unix environment
 
 #### Project 2: CPU Scheduling Algorithm Comparison
 #### Project 3: File System Implementation
