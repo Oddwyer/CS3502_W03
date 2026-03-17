@@ -1,0 +1,37 @@
+# Build outputs
+bin/
+obj/
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# .NET
+*.dll
+*.exe
+*.pdb
+
+# Docker (optional, keeps images out)
+*.tar
+
+# Rider caches
+.idea_modules/
+
+# NuGet
+*.nupkg
+packages/
+
+# VS Code (if you ever use it)
+.vscode/

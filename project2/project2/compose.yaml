@@ -1,0 +1,7 @@
+﻿services:
+  project2:
+    image: project2
+    build:
+      context: .
+      dockerfile: project2/Dockerfile
+
