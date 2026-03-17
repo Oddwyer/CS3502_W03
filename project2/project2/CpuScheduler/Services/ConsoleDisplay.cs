@@ -1,4 +1,4 @@
-namespace CpuSheduler.Services;
+namespace CpuScheduler.Services;
 
 public class ConsoleDisplay
 {

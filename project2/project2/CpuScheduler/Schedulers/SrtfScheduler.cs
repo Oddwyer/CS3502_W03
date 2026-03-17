@@ -1,4 +1,4 @@
-namespace CpuSheduler.Schedulers;
+namespace CpuScheduler.Schedulers;
 
 public class SrtfScheduler
 {

@@ -1,4 +1,4 @@
-namespace CpuSheduler.Services;
+namespace CpuScheduler.Services;
 
 /// <summary>
 /// A workload represents a predefined set of processes used to evaluate

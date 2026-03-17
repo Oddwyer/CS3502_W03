@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CpuSheduler", "CpuSheduler\CpuSheduler.csproj", "{3EE7C45C-9CD9-4EC4-B657-6C568DB7648E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CpuScheduler", "CpuScheduler\CpuScheduler.csproj", "{3EE7C45C-9CD9-4EC4-B657-6C568DB7648E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6030CB16-CE55-457A-9354-05415D3EFFB4}"
 	ProjectSection(SolutionItems) = preProject
