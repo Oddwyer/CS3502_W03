@@ -36,3 +36,10 @@ Console.WriteLine();
 Console.WriteLine("=== Performance Metrics ===");
 Console.WriteLine($"Average Waiting Time: {metrics.AverageWaitingTime:F1}");
 Console.WriteLine($"Average Turnaround Time: {metrics.AverageTurnaroundTime:F1}");
+
+// TODO: STUDENTS - Add CSV export functionality for results data
+// Create a "Export Results" button in the results panel to save:
+// - Individual process results (what's shown in listView1)
+// - Performance metrics summary for each algorithm tested
+// Reference the SaveData_Click() method above to learn CSV file handling
+// This will help you create tables/charts for your project report
