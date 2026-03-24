@@ -40,6 +40,7 @@ public class RRScheduler
             
             var processesNotInQueue = processes.Where(p => p.ArrivalTime > currentTime).OrderBy(p => p.ArrivalTime).ToList();
             
+            // Continue so long as any processes remain in either the ready or waiting queues
             while (processQueue.Count > 0 || processesNotInQueue.Count > 0)
             {
                 // Add any processes that have now arrived
