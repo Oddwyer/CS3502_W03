@@ -8,7 +8,7 @@ namespace CpuScheduler.Schedulers;
 public class RRScheduler
 {
     // Method to execute processes according to Round Robin design.
-    private List<SchedulingResult> Schedule(List<Process> processes, int quantumTime = 4)
+    public List<SchedulingResult> Schedule(List<Process> processes, int quantumTime = 4)
         {
             var results = new List<SchedulingResult>();
             var currentTime = 0;

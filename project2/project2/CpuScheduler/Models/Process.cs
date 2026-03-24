@@ -6,15 +6,16 @@ namespace CpuScheduler.Models;
 public class Process
 {
     public string ProcessId { get; set; }
+    public int ArrivalTime { get; set; }
     public int BurstTime { get; set; }
     public int Priority { get; set; }
-    public int ArrivalTime { get; set; }
 
-    public Process(string processId, int burstTime, int priority, int arrivalTime)
+
+    public Process(string processId, int arrivalTime, int burstTime, int priority)
     {
         ProcessId = processId;
+        ArrivalTime = arrivalTime;
         BurstTime = burstTime;
         Priority = priority;
-        ArrivalTime = arrivalTime;
     }
 }
