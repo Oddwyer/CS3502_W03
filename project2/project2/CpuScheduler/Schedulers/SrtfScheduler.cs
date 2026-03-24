@@ -3,13 +3,14 @@ using CpuScheduler.Models;
 namespace CpuScheduler.Schedulers;
 
 /// <summary>
-/// Shortest Remaining Time First Algorithm: Each process is checked at each time unit to determine current shortest job. Any process
-/// with a longer remaining time is interrupted and the process with shortest job is permitted to run.
+/// Shortest Remaining Time First Algorithm: Each process is checked at each time unit to determine current shortest job
+/// Any process with a longer remaining time is interrupted and the process with the shortest job is permitted to run
 /// </summary>
+
 public class SrtfScheduler
 {
-    // Method to execute processes according to SRTF design.
-    public List<SchedulingResult> Schedule(List<Process> processes)
+    // Method to execute processes according to SRTF design
+    public List<SchedulingResult> Schedule(List<ProcessData> processes)
     {
         var results = new List<SchedulingResult>();
         var currentTime = 0;
@@ -35,7 +36,7 @@ public class SrtfScheduler
         // Continue so long as any processes remain unfinished
         while (remainingBurstTimes.Any(p=> p.Value > 0))
         {
-            // Assign current process to the process with the shortest time. 
+            // Assign current process to the process with the shortest time
             var shortestProcess = processes
                 .Where(p => p.ArrivalTime <= currentTime && remainingBurstTimes[p.ProcessId] > 0)
                 .OrderBy(p => remainingBurstTimes[p.ProcessId])

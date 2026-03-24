@@ -3,13 +3,13 @@ using CpuScheduler.Models;
 namespace CpuScheduler.Schedulers;
 
 /// <summary>
-/// FCFS Algorithm: Execute processes in order of arrival time.
+/// FCFS Algorithm: Execute processes in order of arrival time
 /// </summary>
 
 public class FcfsScheduler
 {
-    // Method to execute processes according to FCFS design.
-    public List<SchedulingResult> Schedule(List<Process> processes)
+    // Method to execute processes according to FCFS design
+    public List<SchedulingResult> Schedule(List<ProcessData> processes)
     {
         var results = new List<SchedulingResult>();
         

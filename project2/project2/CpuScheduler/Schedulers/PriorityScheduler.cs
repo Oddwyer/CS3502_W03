@@ -3,12 +3,12 @@ using CpuScheduler.Models;
 namespace CpuScheduler.Schedulers;
 
 /// <summary>
-/// Priority Algorithm: Higher priority number = higher priority (1 is lowest, higher numbers are higher priority).
+/// Priority Algorithm: Higher priority number = higher priority (1 is lowest, higher numbers are higher priority)
 /// </summary>
 public class PriorityScheduler
 {
-    // Method to execute processes according to Priority design.
-    public List<SchedulingResult> Schedule(List<Process> processes)
+    // Method to execute processes according to Priority design
+    public List<SchedulingResult> Schedule(List<ProcessData> processes)
     {
         var results = new List<SchedulingResult>();
         var currentTime = 0;

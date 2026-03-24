@@ -3,12 +3,12 @@ using CpuScheduler.Models;
 namespace CpuScheduler.Schedulers;
 
 /// <summary>
-/// SJF Algorithm: Shortest Job First - selects process with minimum burst time.
+/// SJF Algorithm: Shortest Job First - selects process with minimum burst time
 /// </summary>
 public class SjfScheduler
 {
-    // Method to execute processes according to SJF design.
-    public List<SchedulingResult> Schedule(List<Process> processes)
+    // Method to execute processes according to SJF design
+    public List<SchedulingResult> Schedule(List<ProcessData> processes)
     {
         var results = new List<SchedulingResult>();
         var currentTime = 0;
@@ -26,7 +26,7 @@ public class SjfScheduler
                 continue;
             }
 
-            // Select process with shortest burst time
+            // Select process with the shortest burst time
             var nextProcess = availableProcesses.OrderBy(p => p.BurstTime).ThenBy(p => p.ArrivalTime).First();
 
             var startTime = Math.Max(currentTime, nextProcess.ArrivalTime);

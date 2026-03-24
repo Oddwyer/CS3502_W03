@@ -3,7 +3,7 @@ namespace CpuScheduler.Models;
 /// <summary>
 /// Data structure for process information used when implementing custom scheduling algorithms.
 /// </summary>
-public class Process
+public class ProcessData
 {
     public string ProcessId { get; set; }
     public int ArrivalTime { get; set; }
@@ -11,7 +11,7 @@ public class Process
     public int Priority { get; set; }
 
 
-    public Process(string processId, int arrivalTime, int burstTime, int priority)
+    public ProcessData(string processId, int arrivalTime, int burstTime, int priority)
     {
         ProcessId = processId;
         ArrivalTime = arrivalTime;
