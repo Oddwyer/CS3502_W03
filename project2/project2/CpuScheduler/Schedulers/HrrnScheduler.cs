@@ -37,7 +37,8 @@ public class HrrnScheduler
         // Continue so long as any processes remain unfinished
         while (currentProcesses.Count > 0)
         {
-            // Assign current process to the process with the highest response ratio 
+            // Assign current process to the process with the highest response ratio
+            // If ratios are the same for one than one process, earliest arrival is tie-breaker
             var selectedProcess = currentProcesses
                 .Where(p => p.ArrivalTime <= currentTime)
                 .OrderByDescending(p =>
