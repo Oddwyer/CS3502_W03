@@ -7,7 +7,7 @@ namespace CpuScheduler.Schedulers;
 /// Any process with a longer remaining time is interrupted and the process with the shortest job is permitted to run
 /// </summary>
 
-public class SrtfScheduler
+public class SrtfScheduler: IScheduler
 {
     // Method to execute processes according to SRTF design
     public List<SchedulingResult> Schedule(List<ProcessData> processes)

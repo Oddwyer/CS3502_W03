@@ -6,7 +6,7 @@ namespace CpuScheduler.Schedulers;
 /// FCFS Algorithm: Execute processes in order of arrival time
 /// </summary>
 
-public class FcfsScheduler
+public class FcfsScheduler :  IScheduler
 {
     // Method to execute processes according to FCFS design
     public List<SchedulingResult> Schedule(List<ProcessData> processes)

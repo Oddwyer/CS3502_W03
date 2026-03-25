@@ -5,10 +5,17 @@ namespace CpuScheduler.Schedulers;
 /// <summary>
 /// Round Robin Algorithm: Each process gets a time quantum, then cycles to next process.
 /// </summary>
-public class RRScheduler
+public class RRScheduler : IScheduler
 {
+    private int _quantumTime = 4;
     // Method to execute processes according to Round Robin design
-    public List<SchedulingResult> Schedule(List<ProcessData> processes, int quantumTime = 4)
+    public RRScheduler(int quantumTime)
+    {
+        _quantumTime = quantumTime;
+    }
+    
+    // Method to include quantumTime to execute processes according to Round Robin design
+    public List<SchedulingResult> Schedule(List<ProcessData> processes)
         {
             var results = new List<SchedulingResult>();
             var currentTime = 0;
@@ -67,7 +74,7 @@ public class RRScheduler
                 }
                 
                 // Execute for quantum time or remaining burst time, whichever is smaller
-                var executionTime = Math.Min(quantumTime, remainingBurstTimes[currentProcess.ProcessId]);
+                var executionTime = Math.Min(_quantumTime, remainingBurstTimes[currentProcess.ProcessId]);
                 currentTime += executionTime;
                 remainingBurstTimes[currentProcess.ProcessId] -= executionTime;
                 

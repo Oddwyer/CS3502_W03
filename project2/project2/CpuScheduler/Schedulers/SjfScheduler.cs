@@ -5,7 +5,7 @@ namespace CpuScheduler.Schedulers;
 /// <summary>
 /// SJF Algorithm: Shortest Job First - selects process with minimum burst time
 /// </summary>
-public class SjfScheduler
+public class SjfScheduler: IScheduler
 {
     // Method to execute processes according to SJF design
     public List<SchedulingResult> Schedule(List<ProcessData> processes)

@@ -21,7 +21,7 @@ public static class WorkloadFactory
             };
         }
 
-        public static List<ProcessData> CreateIoBoundWorkload()
+        public static List<ProcessData> CreateIOBoundWorkload()
         {
             return new List<ProcessData>
             {

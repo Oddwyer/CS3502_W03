@@ -9,7 +9,7 @@ namespace CpuScheduler.Schedulers;
 /// </summary>
 
 
-public class HrrnScheduler
+public class HrrnScheduler: IScheduler
 {
     // Method to execute processes according to HRRN design
     public List<SchedulingResult> Schedule(List<ProcessData> processes)

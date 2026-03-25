@@ -5,7 +5,7 @@ namespace CpuScheduler.Schedulers;
 /// <summary>
 /// Priority Algorithm: Higher priority number = higher priority (1 is lowest, higher numbers are higher priority)
 /// </summary>
-public class PriorityScheduler
+public class PriorityScheduler : IScheduler
 {
     // Method to execute processes according to Priority design
     public List<SchedulingResult> Schedule(List<ProcessData> processes)
