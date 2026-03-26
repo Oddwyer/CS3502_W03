@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.Net;
 using CpuScheduler.Models;
 
 namespace CpuScheduler.Services;
@@ -9,7 +11,8 @@ namespace CpuScheduler.Services;
 
 public static class WorkloadFactory
 {
-        public static List<ProcessData> CreateCpuBoundWorkload()
+
+    public static List<ProcessData> CreateCpuBoundWorkload()
         {
             return new List<ProcessData>
             {
