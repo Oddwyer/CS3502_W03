@@ -36,18 +36,10 @@ do
             result = CaseTwo();
             break;
         case 3:
-            if (result == null)
-            {
-                Console.WriteLine("\nTo export data, please select options 1 or 2 first.");
-            }
-            else
-            {
-                ExportData(result);
-            }
-
+            CaseThree(result);
             break;
         case 4:
-            Console.WriteLine("\nProgram exited");
+            Console.WriteLine("\nProgram exited.");
             return;
         default:
             Console.Write("\nPlease select from the menu options above. ");
@@ -78,7 +70,7 @@ static SavedResult CaseOne()
         input = int.Parse(Console.ReadLine());
     }
 
-    return PreDefined(input);
+    return SimulatorEngine.PreDefined(input);
 }
 
 static SavedResult CaseTwo()
@@ -124,176 +116,17 @@ static SavedResult CaseTwo()
         }
     }
 
-    return RunWorkload("Custom Entry", enteredProcesses);
+    return SimulatorEngine.RunWorkload("Custom Entry", enteredProcesses);
 }
 
-// CSV export functionality for results data: 
-// "Export Results" to save: Performance metrics summary for each algorithm tested
-// Saving to specified folder (Results) in project path
-static void ExportData(SavedResult result)
+static void CaseThree(SavedResult result)
 {
-    string fileName = result.FileName;
-    List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = result.MetricsExport;
-    List<(string Workload, string Algorithm, List<SchedulingResult> Results)> processExport = result.ProcessExport;
-
-    string workload = metricsExport.FirstOrDefault().Workload;
-    var outputDir = "Results";
-    Directory.CreateDirectory(outputDir);
-
-    var metricsPath = Path.Combine(outputDir, $"{fileName}_metrics.csv");
-    var processPath = Path.Combine(outputDir, $"{fileName}_process_results.csv");
-
-    ExportMetricsToCsv(metricsPath, metricsExport);
-    ExportProcessResultsToCsv(processPath, processExport);
-
-    Console.WriteLine($"\nCSV export complete for {workload}.");
-    Console.WriteLine($"Saved to: {metricsPath}");
-    Console.WriteLine($"Saved to: {processPath}");
-}
-
-//==========================Helper Methods==============================
-
-// Run selected predefined workload
-static SavedResult PreDefined(int input)
-{
-    switch (input)
+    if (result == null)
     {
-        case 1:
-            Console.WriteLine("\n*************** Metrics for CPU Bound Workload ***************");
-            return RunWorkload("CPU bound", WorkloadFactory.CreateCpuBoundWorkload());
-        case 2:
-            Console.WriteLine("\n*************** Metrics for I/O Bound Workload ***************");
-            return RunWorkload("I/O bound", WorkloadFactory.CreateIOBoundWorkload());
-        case 3:
-            Console.WriteLine("\n*************** Metrics for Mixed Bound Workload ***************");
-            return RunWorkload("Mixed bound", WorkloadFactory.CreateMixedWorkload());
-        default:
-            Console.WriteLine("\nInvalid workload.");
-            return null;
+        Console.WriteLine("\nTo export data, please select options 1 or 2 first.");
     }
-}
-
-// Run method to abstract logic for calculating and displaying results
-static (List<SchedulingResult> results, PerformanceMetrics metrics) Run(string algorithm, IScheduler scheduler,
-    List<ProcessData> processes)
-{
-    List<SchedulingResult> results;
-    var schedulerType = scheduler;
-    results = schedulerType.Schedule(processes);
-    var calculator = new MetricsCalculator();
-    var metrics = calculator.Calculate(results);
-
-    Console.WriteLine($"\n===================== {algorithm} Scheduler =========================");
-
-    foreach (var result in results)
+    else
     {
-        Console.WriteLine(
-            $"{result.ProcessId,-5} | Start: {result.StartTime,-3} | " +
-            $"Finish: {result.FinishTime,-3} | Wait: {result.WaitingTime,-3} | " +
-            $"Turnaround: {result.TurnaroundTime,-3}");
+        SimulatorEngine.ExportData(result);
     }
-
-    Console.WriteLine();
-    Console.WriteLine($"=== {algorithm} Performance Metrics ===");
-    Console.WriteLine($"Average Waiting Time: {metrics.AverageWaitingTime:F2}");
-    Console.WriteLine($"Average Turnaround Time: {metrics.AverageTurnaroundTime:F2}");
-    Console.WriteLine($"CPU Utilization: {metrics.CpuUtilization:F1}%");
-    Console.WriteLine($"Throughput: {metrics.Throughput:F3}");
-    Console.WriteLine($"Response Time: {metrics.ResponseTime:F2}");
-
-    return (results, metrics);
-}
-
-// Run algorithms using entered workload.
-static SavedResult RunWorkload(string workload, List<ProcessData> processes)
-{
-    // Reference lists for CSV exports.
-    List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = new();
-    List<(string Workload, string Algorithm, List<SchedulingResult> Results)> processExport = new();
-
-    var (fcfsResults, fcfsMetrics) = Run("FCFS", new FcfsScheduler(), processes);
-    metricsExport.Add((workload, "FCFS", fcfsMetrics));
-    processExport.Add((workload, "FCFS", fcfsResults));
-
-    var (sjfResults, sjfMetrics) = Run("SJF", new SjfScheduler(), processes);
-    metricsExport.Add((workload, "SJF", sjfMetrics));
-    processExport.Add((workload, "SJF", sjfResults));
-
-    var (rrResults, rrMetrics) = Run("RR", new RRScheduler(4), processes);
-    metricsExport.Add((workload, "RR", rrMetrics));
-    processExport.Add((workload, "RR", rrResults));
-
-    var (priorityResults, priorityMetrics) = Run("Priority", new PriorityScheduler(), processes);
-    metricsExport.Add((workload, "Priority", priorityMetrics));
-    processExport.Add((workload, "Priority", priorityResults));
-
-    var (srtfResults, srtfMetrics) = Run("SRTF", new SrtfScheduler(), processes);
-    metricsExport.Add((workload, "SRTF", srtfMetrics));
-    processExport.Add((workload, "SRTF", srtfResults));
-
-    var (hrrnResults, hrrnMetrics) = Run("HRRN", new HrrnScheduler(), processes);
-    metricsExport.Add((workload, "HRRN", hrrnMetrics));
-    processExport.Add((workload, "HRRN", hrrnResults));
-
-    var fileName = workload.Replace(" ", "_").Replace("/", "_").ToLower();
-    return new SavedResult(fileName, metricsExport, processExport);
-}
-
-// Takes a file path and list of rows to write to file
-static void ExportMetricsToCsv(string filePath,
-    List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> rows)
-{
-    // Create text builder
-    var sb = new StringBuilder();
-
-    // Header row for csv file
-    sb.AppendLine("Algorithm,AverageWaitingTime,AverageTurnaroundTime,CpuUtilization,Throughput,ResponseTime");
-
-    // For each row, add new algorithm and respective metrics
-    foreach (var row in rows)
-    {
-        sb.AppendLine(
-            $"{row.Algorithm}," +
-            $"{row.Metrics.AverageWaitingTime.ToString("F2", CultureInfo.InvariantCulture)}," +
-            $"{row.Metrics.AverageTurnaroundTime.ToString("F2", CultureInfo.InvariantCulture)}," +
-            $"{row.Metrics.CpuUtilization.ToString("F1", CultureInfo.InvariantCulture)}," +
-            $"{row.Metrics.Throughput.ToString("F3", CultureInfo.InvariantCulture)}," +
-            $"{row.Metrics.ResponseTime.ToString("F2", CultureInfo.InvariantCulture)}");
-    }
-
-    // Save to file
-    File.WriteAllText(filePath, sb.ToString());
-}
-
-// "Export Results" to save: Individual process results
-static void ExportProcessResultsToCsv(string filePath,
-    List<(string Workload, string Algorithm, List<SchedulingResult> Results)> rows)
-{
-    // Create a text builder
-    var sb = new StringBuilder();
-
-    // Header row for csv file
-    sb.AppendLine("Algorithm,ProcessId,ArrivalTime,BurstTime,StartTime,FinishTime,WaitingTime,TurnaroundTime");
-
-    // For each algorithm in the list...
-    foreach (var row in rows)
-    {
-        // ...Add details related to each process in the algorithm's results list
-        foreach (var result in row.Results)
-        {
-            sb.AppendLine(
-                $"{row.Workload}," +
-                $"{row.Algorithm}," +
-                $"{result.ProcessId}," +
-                $"{result.ArrivalTime}," +
-                $"{result.BurstTime}," +
-                $"{result.StartTime}," +
-                $"{result.FinishTime}," +
-                $"{result.WaitingTime}," +
-                $"{result.TurnaroundTime}");
-        }
-    }
-
-    // Save to file
-    File.WriteAllText(filePath, sb.ToString());
 }
