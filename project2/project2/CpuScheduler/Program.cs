@@ -5,61 +5,68 @@ using System.Globalization;
 using System.Text;
 
 int input = 0;
+SavedResult result = null;
 string menu = """
               ================== CPU Schedule Simulator ==================
-              
+
               1. Use a predefined workload.
               2. Enter processes manually.
-              3. Exit program.    
-              
+              3. Export data.
+              4. Exit program.    
+
               Please select an option from the menu above: 
               """;
 do
 {
     Console.WriteLine();
     Console.Write(menu);
-    try
-    {
-        input = int.Parse(Console.ReadLine());
-        switch (input)
-        {
-            case 1:
-                CaseOne();
-                break;
-            case 2:
-                CaseTwo();
-                break;
-            case 3: 
-                Console.WriteLine("Program exited");
-                return;
-            default:
-                Console.Write("\nPlease select from the menu options above. ");
-                Console.WriteLine();
-                break;
-        }
-    }
-    catch (Exception e)
-    {
-        Console.WriteLine("\nInvalid entry, please try again.");
-    }
-} while (input != 3);
 
+    if (!int.TryParse(Console.ReadLine(), out input))
+    {
+        Console.WriteLine("\nInvalid input. Please enter a number.");
+        return;
+    }
 
-RunWorkload("CPU Bound", WorkloadFactory.CreateCpuBoundWorkload());
-RunWorkload("I/O Bound", WorkloadFactory.CreateIOBoundWorkload());
-RunWorkload("Mixed Bound", WorkloadFactory.CreateMixedWorkload());
+    switch (input)
+    {
+        case 1:
+            result = CaseOne();
+            break;
+        case 2:
+            result = CaseTwo();
+            break;
+        case 3:
+            if (result == null)
+            {
+                Console.WriteLine("\nTo export data, please select options 1 or 2 first.");
+            }
+            else
+            {
+                ExportData(result);
+            }
+
+            break;
+        case 4:
+            Console.WriteLine("\nProgram exited");
+            return;
+        default:
+            Console.Write("\nPlease select from the menu options above. ");
+            Console.WriteLine();
+            break;
+    }
+} while (input != 4);
 
 
 //==========================Menu Methods==============================
 
-static void CaseOne()
+static SavedResult CaseOne()
 {
     string predefined = """
-                        
+
                         1. Simulate with CPU bound workload.
                         2. Simulate with I/O bound workload.
                         3. Simulate with Mixed bound workload.    
-                        
+
                         Please select a workload from the menu above: 
                         """;
     int input;
@@ -71,18 +78,29 @@ static void CaseOne()
         input = int.Parse(Console.ReadLine());
     }
 
-    PreDefined(input);
+    return PreDefined(input);
 }
 
-static void CaseTwo()
+static SavedResult CaseTwo()
 {
-    List<ProcessData> enteredProcesses;
+    List<ProcessData> enteredProcesses = new List<ProcessData>();
 
-    Console.Write("How many processes? ");
-    int count = int.Parse(Console.ReadLine());
-    enteredProcesses = new List<ProcessData>(count);
+    int count;
+    while (true)
+    {
+        try
+        {
+            Console.Write("\nHow many processes? ");
+            count = int.Parse(Console.ReadLine());
+            break;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("\nInvalid entry. Please try again.");
+        }
+    }
 
-    for (int i = 1; i <= enteredProcesses.Count; i++)
+    for (int i = 1; i <= count; i++)
     {
         try
         {
@@ -105,30 +123,53 @@ static void CaseTwo()
             i--;
         }
     }
+
+    return RunWorkload("Custom Entry", enteredProcesses);
+}
+
+// CSV export functionality for results data: 
+// "Export Results" to save: Performance metrics summary for each algorithm tested
+// Saving to specified folder (Results) in project path
+static void ExportData(SavedResult result)
+{
+    string fileName = result.FileName;
+    List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = result.MetricsExport;
+    List<(string Workload, string Algorithm, List<SchedulingResult> Results)> processExport = result.ProcessExport;
+
+    string workload = metricsExport.FirstOrDefault().Workload;
+    var outputDir = "Results";
+    Directory.CreateDirectory(outputDir);
+
+    var metricsPath = Path.Combine(outputDir, $"{fileName}_metrics.csv");
+    var processPath = Path.Combine(outputDir, $"{fileName}_process_results.csv");
+
+    ExportMetricsToCsv(metricsPath, metricsExport);
+    ExportProcessResultsToCsv(processPath, processExport);
+
+    Console.WriteLine($"\nCSV export complete for {workload}.");
+    Console.WriteLine($"Saved to: {metricsPath}");
+    Console.WriteLine($"Saved to: {processPath}");
 }
 
 //==========================Helper Methods==============================
 
 // Run selected predefined workload
-static void PreDefined(int input)
+static SavedResult PreDefined(int input)
 {
     switch (input)
     {
         case 1:
             Console.WriteLine("\n*************** Metrics for CPU Bound Workload ***************");
-            RunWorkload("CPU bound", WorkloadFactory.CreateCpuBoundWorkload());
-            break;
+            return RunWorkload("CPU bound", WorkloadFactory.CreateCpuBoundWorkload());
         case 2:
             Console.WriteLine("\n*************** Metrics for I/O Bound Workload ***************");
-            RunWorkload("I/O bound", WorkloadFactory.CreateIOBoundWorkload());
-            break;
+            return RunWorkload("I/O bound", WorkloadFactory.CreateIOBoundWorkload());
         case 3:
             Console.WriteLine("\n*************** Metrics for Mixed Bound Workload ***************");
-            RunWorkload("Mixed bound", WorkloadFactory.CreateMixedWorkload());
-            break;
+            return RunWorkload("Mixed bound", WorkloadFactory.CreateMixedWorkload());
         default:
-            Console.WriteLine("Invalid workload.");
-            break;
+            Console.WriteLine("\nInvalid workload.");
+            return null;
     }
 }
 
@@ -164,7 +205,7 @@ static (List<SchedulingResult> results, PerformanceMetrics metrics) Run(string a
 }
 
 // Run algorithms using entered workload.
-static void RunWorkload(string workload, List<ProcessData> processes)
+static SavedResult RunWorkload(string workload, List<ProcessData> processes)
 {
     // Reference lists for CSV exports.
     List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = new();
@@ -195,24 +236,9 @@ static void RunWorkload(string workload, List<ProcessData> processes)
     processExport.Add((workload, "HRRN", hrrnResults));
 
     var fileName = workload.Replace(" ", "_").Replace("/", "_").ToLower();
-
-    // Saving to specified folder (Results) in project path
-    var outputDir = "Results";
-    Directory.CreateDirectory(outputDir);
-
-    var metricsPath = Path.Combine(outputDir, $"{fileName}_metrics.csv");
-    var processPath = Path.Combine(outputDir, $"{fileName}_process_results.csv");
-
-    ExportMetricsToCsv(metricsPath, metricsExport);
-    ExportProcessResultsToCsv(processPath, processExport);
-
-    Console.WriteLine($"\nCSV export complete for {workload}.");
-    Console.WriteLine($"Saved to: {metricsPath}");
-    Console.WriteLine($"Saved to: {processPath}");
+    return new SavedResult(fileName, metricsExport, processExport);
 }
 
-// CSV export functionality for results data: 
-// "Export Results" to save: Performance metrics summary for each algorithm tested
 // Takes a file path and list of rows to write to file
 static void ExportMetricsToCsv(string filePath,
     List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> rows)
