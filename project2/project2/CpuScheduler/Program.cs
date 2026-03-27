@@ -77,6 +77,7 @@ static SavedResult CaseTwo()
 {
     List<ProcessData> enteredProcesses = new List<ProcessData>();
 
+    // Request number of processes
     int count;
     while (true)
     {
@@ -92,6 +93,7 @@ static SavedResult CaseTwo()
         }
     }
 
+    // Request data for each process
     for (int i = 1; i <= count; i++)
     {
         try
@@ -116,7 +118,88 @@ static SavedResult CaseTwo()
         }
     }
 
-    return SimulatorEngine.RunWorkload("Custom Entry", enteredProcesses);
+    // Request scheduler for simulation
+    int input;
+    string algorithm = null;
+    int quantum = 4;
+    List<SchedulingResult> results = null;
+    PerformanceMetrics metrics = null;
+    SavedResult result = new SavedResult(
+        "custom_entry",
+        new List<(string, string, PerformanceMetrics)>(),
+        new List<(string, string, List<SchedulingResult>)>()
+    );
+    string predefined = """
+
+                        1. Run First Come First Serve (FCFS) Scheduler
+                        2. Run Highest Response Ratio Next (HRRN) Scheduler
+                        3. Run Priority Scheduler  
+                        4. Run Round Robin (RR) Scheduler
+                        5. Run Shortest Job First (SFJ) Scheduler
+                        6. Run Shortest Remaining Time First (SRTF) Scheduler 
+                        7. Add Results for Export
+                        8. Finish simulation
+
+                        Please select an option above: 
+                        """;
+    do
+    {
+        Console.Write(predefined);
+        input = int.Parse(Console.ReadLine());
+        while (input < 1 || input > 8)
+        {
+            Console.WriteLine("Invalid entry.\nPlease select an algorithm from the menu above: ");
+            input = int.Parse(Console.ReadLine());
+        }
+
+        // Run simulation based on selected scheduler and entered process data
+        switch (input)
+        {
+            case 1:
+                (results, metrics) = SimulatorEngine.RunFcfs("Custom Entry", enteredProcesses);
+                algorithm = "FCFS";
+                break;
+            case 2:
+                (results, metrics) = SimulatorEngine.RunHrrn("Custom Entry", enteredProcesses);
+                algorithm = "HRRN";
+                break;
+            case 3:
+                (results, metrics)  = SimulatorEngine.RunPriority("Custom Entry", enteredProcesses);
+                algorithm = "Priority";
+                break;
+            case 4:
+                Console.Write("Enter a quantum value (default = 4): ");
+                if (!int.TryParse(Console.ReadLine(), out input))
+                {
+                    Console.WriteLine("\nInvalid input. Please enter a number.");
+                    return null;
+                }
+                if (input != 4)
+                {
+                    quantum = input;
+                }
+                (results, metrics) = SimulatorEngine.RunRoundRobin("Custom Entry", quantum, enteredProcesses);
+                algorithm = "RR";
+                break;
+            case 5:
+                (results, metrics)  = SimulatorEngine.RunSjf("Custom Entry", enteredProcesses);
+                algorithm = "SJF";
+                break;
+            case 6:
+                (results, metrics)  = SimulatorEngine.RunSrtf("Custom Entry", enteredProcesses);
+                algorithm = "SRTF";
+                break;
+            case 7:
+                result.MetricsExport.Add(("Custom Entry", algorithm, metrics));
+                result.ProcessExport.Add(("Custom Entry", algorithm, results));
+                break;
+            case 8:
+                Console.WriteLine("Returning to menu.");
+                break;
+        }
+    } while (input != 8);
+
+    return result;
 }
 
 static void CaseThree(SavedResult result)
