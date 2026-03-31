@@ -21,7 +21,7 @@ The simulator supports:
 
 ## Platform and Build Specs
 Tested on:
-- .NET 10
+- .NET 8
 - JetBrains Rider
 - Linux console
 - Docker
@@ -54,6 +54,10 @@ dotnet run
 ```
 ## Build & Run (Docker)
 
+From: 
+```bash
+cd project2
+```
 Build the image:
 ```bash
 docker build -t cpu-scheduler .
@@ -69,7 +73,7 @@ docker run -it --rm cpu-scheduler
 # Console Build Specs
 
 ## Build Requirements
-- .NET 10 SDK
+- .NET 8 SDK
 - Terminal/console environment
 - Optional: JetBrains Rider or Visual Studio
 - Optional: Docker Desktop / Docker Engine
@@ -78,5 +82,5 @@ You could also add:
 
 ```md
 ## Dependencies
-- .NET 10 SDK
+- .NET 8 SDK
 - No external NuGet packages required
