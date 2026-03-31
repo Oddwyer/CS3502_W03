@@ -15,16 +15,9 @@ The simulator supports:
 - Predefined workloads
 - Manual process entry
 - Algorithm comparison
-- CSV export of metrics and per-process results (exposred to the Resuts/folder). Files include:
+- CSV export of metrics and per-process results (exported to the Results/ folder). Files include:
   - Metrics summary CSV
   - Per-process scheduling results CSV
-
-## Platform and Build Specs
-Tested on:
-- .NET 8
-- JetBrains Rider
-- Linux console
-- Docker
 
 ## Project Structure
 - `Program.cs` — main menu and user interaction
@@ -32,29 +25,52 @@ Tested on:
 - `Schedulers/` — scheduling algorithm implementations
 - `Services/` — simulation engine, metrics calculation, workload generation, and export logic
 
-## Build & Run (IDE)
+---
+
+## Platform & Build Specifications
+### Platform Tested on:
+- .NET 8
+- JetBrains Rider
+- Linux console
+- Docker
+
+#### Build Requirements
+- .NET 8 SDK
+- Terminal/console environment
+- Optional: JetBrains Rider or Visual Studio
+- Optional: Docker Desktop / Docker Engine
+
+### Dependencies
+- .NET 8 SDK
+- No external NuGet packages required
+---
+## Build Instructions
+
+These instructions allow the application to be executed either locally (console/IDE) or within a Docker container for consistent cross-platform behavior.
+
+### Build & Run (IDE)
 1. Open the solution in JetBrains Rider or Visual Studio.
 2. Restore dependencies if prompted.
 3. Set `CpuScheduler` as the startup project.
 4. Build and run the project.
 
-### Rider
+#### Rider
 - Open `project2.sln`
 - Select the `CpuScheduler` run configuration
 - Click Run
 
-## Build & Run (Console)
-From the project root:
+### Build & Run (Console)
 
+From the directory containing the solution file:
 ```bash
-cd CpuScheduler
+cd project2/CpuScheduler
 dotnet restore
 dotnet build
 dotnet run
 ```
-## Build & Run (Docker)
+### Build & Run (Docker)
 
-From: 
+From the directory containing the Dockerfile: 
 ```bash
 cd project2
 ```
@@ -69,18 +85,3 @@ docker run -it --rm cpu-scheduler
 
 
 ---
-
-# Console Build Specs
-
-## Build Requirements
-- .NET 8 SDK
-- Terminal/console environment
-- Optional: JetBrains Rider or Visual Studio
-- Optional: Docker Desktop / Docker Engine
-
-You could also add:
-
-```md
-## Dependencies
-- .NET 8 SDK
-- No external NuGet packages required
