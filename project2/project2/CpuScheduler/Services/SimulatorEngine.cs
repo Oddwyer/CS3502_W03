@@ -6,149 +6,122 @@ using System.Text;
 namespace CpuScheduler.Services;
 
 public static class SimulatorEngine
-{ 
+{
     // Run selected predefined workload
-    public static SavedResult PreDefined(int input)
+    public static SavedResult RunWorkload(int input)
     {
-        switch (input)
+        // Dictionary of available workload creators
+        var workloads = new Dictionary<int, (string name, Func<List<ProcessData>> Create)>
         {
-            case 1:
-                Console.WriteLine("\n*************** Metrics for CPU Bound Workload ***************");
-                return RunWorkload("CPU bound", WorkloadFactory.CreateCpuBoundWorkload());
-            case 2:
-                Console.WriteLine("\n*************** Metrics for I/O Bound Workload ***************");
-                return RunWorkload("I/O bound", WorkloadFactory.CreateIOBoundWorkload());
-            case 3:
-                Console.WriteLine("\n*************** Metrics for Mixed Bound Workload ***************");
-                return RunWorkload("Mixed bound", WorkloadFactory.CreateMixedWorkload());
-            default:
-                Console.WriteLine("\nInvalid workload.");
-                return null;
+            { 1, ("CPU Bound", WorkloadFactory.CreateCpuBoundWorkload) },
+            { 2, ("I/O Bound", WorkloadFactory.CreateIOBoundWorkload) },
+            { 3, ("Mixed Bound", WorkloadFactory.CreateMixedWorkload) },
+            { 4, ("FCFS Verification", WorkloadFactory.FcfsVerificationWorkload) },
+            { 5, ("Zero Arrival", WorkloadFactory.CreateAllArrivalZeroWorkload) },
+            { 6, ("Identical Burst", WorkloadFactory.CreateIdenticalBurstWorkload) },
+            { 7, ("Mixed Burst", WorkloadFactory.CreateBurstMixWorkload) },
+            { 8, ("Starvation", WorkloadFactory.CreateStarvationWorkload) },
+            { 9, ("Priority/Inversion", WorkloadFactory.CreatePriorityInversionWorkload) },
+            { 10, ("Small", WorkloadFactory.CreateSmallVerificationWorkload) },
+            { 11, ("Medium", WorkloadFactory.CreateMediumWorkload) },
+            { 12, ("Large", WorkloadFactory.CreateLargeWorkload) }
+        };
+
+        // Search for workload choice in dictionary. If exists, run workload against all schedulers
+        if (workloads.TryGetValue(input, out var workload))
+        {
+            Console.WriteLine($"\n*************** Metrics for {workload.name} Workload ***************");
+            var processes = workload.Create();
+            PrintProcesses(processes);
+            return RunAllSchedulers(workload.name, processes);
+        }
+
+        else
+        {
+            Console.WriteLine("Invalid selection.");
+            return null;
         }
     }
     
-    // Run all algorithms using entered workload
-    private static SavedResult RunWorkload(string workload, List<ProcessData> processes)
+    // Run one selected scheduler
+    public static (string algorithm, List<SchedulingResult> results, PerformanceMetrics metrics) RunScheduler(int choice,
+        List<ProcessData> processes)
     {
         // Reference lists for CSV exports.
         List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = new();
         List<(string Workload, string Algorithm, List<SchedulingResult> Results)> processExport = new();
 
-        var (fcfsResults, fcfsMetrics) = RunFcfs("FCFS", processes);
+        // Dictionary of available schedulers
+        var schedulers = new Dictionary<int, (string name, IScheduler scheduler)>
+        {
+            { 1, ("FCFS", new FcfsScheduler()) },
+            { 2, ("HRRN", new HrrnScheduler()) },
+            { 3, ("Priority", new PriorityScheduler()) },
+            { 4, ("RR", new RRScheduler(4)) },
+            { 5, ("SJF", new SjfScheduler()) },
+            { 6, ("SRTF", new SrtfScheduler()) }
+        };
+
+        // Search for scheduler choice in dictionary. If exists, run scheduler
+        if (schedulers.TryGetValue(choice, out var selected))
+        {
+            PrintProcesses(processes);
+            var (results, metrics) = Run(selected.name, selected.scheduler, processes);
+            metricsExport.Add(("Custom Workload", selected.name, metrics));
+            processExport.Add(("Custom Workload", selected.name, results));
+
+            return (selected.name, results, metrics);
+        }
+        else
+        {
+            throw new ArgumentException("Invalid selection.");
+        }
+    }
+
+    //============================= Helper methods ============================== 
+    
+    // Run all algorithms using entered workload
+    private static SavedResult RunAllSchedulers(string workload, List<ProcessData> processes)
+    {
+        // Reference lists for CSV exports
+        List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = new();
+        List<(string Workload, string Algorithm, List<SchedulingResult> Results)> processExport = new();
+
+        // Display processes
+        PrintProcesses(processes);
+        
+        // Run all algorithms add save results for export
+        var (fcfsResults, fcfsMetrics) = Run("FCFS", new FcfsScheduler(), processes);
         metricsExport.Add((workload, "FCFS", fcfsMetrics));
         processExport.Add((workload, "FCFS", fcfsResults));
 
-        var (sjfResults, sjfMetrics) = RunSjf("SJF", processes);
+        var (sjfResults, sjfMetrics) = Run("SJF", new SjfScheduler(), processes);
         metricsExport.Add((workload, "SJF", sjfMetrics));
         processExport.Add((workload, "SJF", sjfResults));
 
-        var (rrResults, rrMetrics) = RunRoundRobin("RR", 4, processes);
+        var (rrResults, rrMetrics) = Run("RR", new RRScheduler(4), processes);
         metricsExport.Add((workload, "RR", rrMetrics));
         processExport.Add((workload, "RR", rrResults));
 
-        var (priorityResults, priorityMetrics) = RunPriority("Priority", processes);
+        var (priorityResults, priorityMetrics) = Run("Priority", new PriorityScheduler(), processes);
         metricsExport.Add((workload, "Priority", priorityMetrics));
         processExport.Add((workload, "Priority", priorityResults));
 
-        var (srtfResults, srtfMetrics) = RunSrtf("SRTF", processes);
+        var (srtfResults, srtfMetrics) = Run("SRTF", new SrtfScheduler(), processes);
         metricsExport.Add((workload, "SRTF", srtfMetrics));
         processExport.Add((workload, "SRTF", srtfResults));
 
-        var (hrrnResults, hrrnMetrics) = RunHrrn("HRRN", processes);
+        var (hrrnResults, hrrnMetrics) = Run("HRRN", new HrrnScheduler(), processes);
         metricsExport.Add((workload, "HRRN", hrrnMetrics));
         processExport.Add((workload, "HRRN", hrrnResults));
 
         var fileName = workload.Replace(" ", "_").Replace("/", "_").ToLower();
         return new SavedResult(fileName, metricsExport, processExport);
     }
-    
-    //====================Individual algorithm methods using entered workload===============================
-    
-    // First Come, First Served
-    public static (List<SchedulingResult> results, PerformanceMetrics metrics) RunFcfs(string workload, List<ProcessData> processes)
-    {
-        // Reference lists for CSV exports.
-        List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = new();
-        List<(string Workload, string Algorithm, List<SchedulingResult> Results)> processExport = new();
-        
-        var (fcfsResults, fcfsMetrics) = Run("FCFS", new FcfsScheduler(), processes);
-        metricsExport.Add((workload, "FCFS", fcfsMetrics));
-        processExport.Add((workload, "FCFS", fcfsResults));
-        
-        return (fcfsResults, fcfsMetrics);
-    }
 
-    // Shortest Job First
-    public static  (List<SchedulingResult> results, PerformanceMetrics metrics) RunSjf(string workload, List<ProcessData> processes)
-    {
-        List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = new();
-        List<(string Workload, string Algorithm, List<SchedulingResult> Results)> processExport = new();
-        
-        var (sjfResults, sjfMetrics) = Run("SJF", new SjfScheduler(), processes);
-        metricsExport.Add((workload, "SJF", sjfMetrics));
-        processExport.Add((workload, "SJF", sjfResults));
-        
-        return (sjfResults, sjfMetrics);
-    }
-    
-    // Round Robin
-    public static  (List<SchedulingResult> results, PerformanceMetrics metrics)RunRoundRobin(string workload, int quantum, List<ProcessData> processes)
-    {
-        int enteredQuantum = quantum;
-        List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = new();
-        List<(string Workload, string Algorithm, List<SchedulingResult> Results)> processExport = new();
-        
-        var (rrResults, rrMetrics) = Run("RR", new RRScheduler(4), processes);
-        metricsExport.Add((workload, "RR", rrMetrics));
-        processExport.Add((workload, "RR", rrResults));
-        
-        return (rrResults, rrMetrics);
-    }
-    
-    // Priority
-    public static  (List<SchedulingResult> results, PerformanceMetrics metrics) RunPriority(string workload, List<ProcessData> processes)
-    {
-        List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = new();
-        List<(string Workload, string Algorithm, List<SchedulingResult> Results)> processExport = new();
-        
-        var (priorityResults, priorityMetrics) = Run("Priority", new PriorityScheduler(), processes);
-        metricsExport.Add((workload, "Priority", priorityMetrics));
-        processExport.Add((workload, "Priority", priorityResults));
-        
-        return (priorityResults, priorityMetrics);
-    }
-    
-    // Shortest Remaining Time First
-    public static  (List<SchedulingResult> results, PerformanceMetrics metrics) RunSrtf(string workload, List<ProcessData> processes)
-    {
-        // Reference lists for CSV exports.
-        List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = new();
-        List<(string Workload, string Algorithm, List<SchedulingResult> Results)> processExport = new();
-
-        var (srtfResults, srtfMetrics) = Run("SRTF", new SrtfScheduler(), processes);
-        metricsExport.Add((workload, "SRTF", srtfMetrics));
-        processExport.Add((workload, "SRTF", srtfResults));
-
-        var fileName = workload.Replace(" ", "_").Replace("/", "_").ToLower();
-        return (srtfResults, srtfMetrics);
-    }
-    
-    // Highest Response Ratio Next
-    public static  (List<SchedulingResult> results, PerformanceMetrics metrics) RunHrrn(string workload, List<ProcessData> processes)
-    {
-        // Reference lists for CSV exports.
-        List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = new();
-        List<(string Workload, string Algorithm, List<SchedulingResult> Results)> processExport = new();
-
-        var (hrrnResults, hrrnMetrics) = Run("HRRN", new HrrnScheduler(), processes);
-        metricsExport.Add((workload, "HRRN", hrrnMetrics));
-        processExport.Add((workload, "HRRN", hrrnResults));
-
-        return (hrrnResults,  hrrnMetrics);
-    }
-    
     // Helper run method to abstract logic for calculating and displaying results
-    private static (List<SchedulingResult> results, PerformanceMetrics metrics) Run(string algorithm, IScheduler scheduler,
+    private static (List<SchedulingResult> results, PerformanceMetrics metrics) Run(string algorithm,
+        IScheduler scheduler,
         List<ProcessData> processes)
     {
         List<SchedulingResult> results;
@@ -157,7 +130,7 @@ public static class SimulatorEngine
         var calculator = new MetricsCalculator();
         var metrics = calculator.Calculate(results);
 
-        Console.WriteLine($"\n===================== {algorithm} Scheduler =========================");
+        Console.WriteLine($"\n=== {algorithm} Scheduler ===");
 
         foreach (var result in results)
         {
@@ -174,12 +147,23 @@ public static class SimulatorEngine
         Console.WriteLine($"CPU Utilization: {metrics.CpuUtilization:F1}%");
         Console.WriteLine($"Throughput: {metrics.Throughput:F3}");
         Console.WriteLine($"Response Time: {metrics.ResponseTime:F2}");
-
+        Console.WriteLine($"\n----------------------------------------------------------------");
         return (results, metrics);
     }
 
+    // Display entered processes
+    private static void PrintProcesses(List<ProcessData> processes)
+    {
+        Console.WriteLine("\nCurrent Processes:");
+        for (int i = 0; i < processes.Count; i++)
+        {
+            Console.WriteLine(
+                $"P{i + 1}: Arrival Time: {processes[i].ArrivalTime}\tBurst Time: {processes[i].BurstTime}\tPriority: {processes[i].Priority}");
+        }
+    }
 
-    //================= CSV export functionality for results data ================= 
+
+    //================= CSV export functionality for results data =================
     
     // Saving to specified folder (Results) in project path
     public static void ExportData(SavedResult result)

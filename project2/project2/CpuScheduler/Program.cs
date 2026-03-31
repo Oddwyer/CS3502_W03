@@ -6,14 +6,15 @@ using System.Text;
 
 int input = 0;
 SavedResult result = null;
-string menu = """
-              ================== CPU Schedule Simulator ==================
 
+string menu = """
+              ****************** CPU Schedule Simulator ******************
+              
               1. Use a predefined workload.
               2. Enter processes manually.
               3. Export data.
-              4. Exit program.    
-
+              4. Exit program.
+              
               Please select an option from the menu above: 
               """;
 do
@@ -55,22 +56,37 @@ static SavedResult CaseOne()
 {
     string predefined = """
 
-                        1. Simulate with CPU bound workload.
-                        2. Simulate with I/O bound workload.
-                        3. Simulate with Mixed bound workload.    
-
+                        ----------Workload Options---------
+                        Normal Use:
+                        1. CPU Bound
+                        2. I/O Bound
+                        3. Mixed Bound    
+                        
+                        Special Case:
+                        4. FCFS Verification
+                        5. Zero Arrival
+                        6. Identical Burst
+                        7. Mixed Burst
+                        8. Starvation
+                        9. Priority/Inversion
+                        
+                        Size:
+                        10. Small
+                        11. Medium
+                        12. Large
+                        
                         Please select a workload from the menu above: 
                         """;
     int input;
     Console.Write(predefined);
     input = int.Parse(Console.ReadLine());
-    while (input != 1 && input != 2 && input != 3)
+    while (input < 1 || input < 12)
     {
         Console.WriteLine("Invalid entry.\nPlease select an option from the menu above: ");
         input = int.Parse(Console.ReadLine());
     }
 
-    return SimulatorEngine.PreDefined(input);
+    return SimulatorEngine.RunWorkload(input);
 }
 
 static SavedResult CaseTwo()
@@ -118,7 +134,7 @@ static SavedResult CaseTwo()
         }
     }
 
-    // Request scheduler for simulation
+    // Select scheduler for simulation
     int input;
     string algorithm = null;
     int quantum = 4;
@@ -138,10 +154,11 @@ static SavedResult CaseTwo()
                         5. Run Shortest Job First (SFJ) Scheduler
                         6. Run Shortest Remaining Time First (SRTF) Scheduler 
                         7. Add Results for Export
-                        8. Finish simulation
+                        8. Return to Main Menu
 
                         Please select an option above: 
                         """;
+    
     do
     {
         Console.Write(predefined);
@@ -152,46 +169,45 @@ static SavedResult CaseTwo()
             input = int.Parse(Console.ReadLine());
         }
 
-        // Run simulation based on selected scheduler and entered process data
+        Console.WriteLine($"\n===================== Your CPU Simulation =========================");
+        
+        // Run simulation based on selected scheduler and entered processes data
         switch (input)
         {
             case 1:
-                (results, metrics) = SimulatorEngine.RunFcfs("Custom Entry", enteredProcesses);
-                algorithm = "FCFS";
-                break;
             case 2:
-                (results, metrics) = SimulatorEngine.RunHrrn("Custom Entry", enteredProcesses);
-                algorithm = "HRRN";
-                break;
             case 3:
-                (results, metrics)  = SimulatorEngine.RunPriority("Custom Entry", enteredProcesses);
-                algorithm = "Priority";
-                break;
             case 4:
-                Console.Write("Enter a quantum value (default = 4): ");
-                if (!int.TryParse(Console.ReadLine(), out input))
-                {
-                    Console.WriteLine("\nInvalid input. Please enter a number.");
-                    return null;
-                }
-                if (input != 4)
-                {
-                    quantum = input;
-                }
-                (results, metrics) = SimulatorEngine.RunRoundRobin("Custom Entry", quantum, enteredProcesses);
-                algorithm = "RR";
-                break;
-            case 5:
-                (results, metrics)  = SimulatorEngine.RunSjf("Custom Entry", enteredProcesses);
-                algorithm = "SJF";
-                break;
+            case 5: 
             case 6:
-                (results, metrics)  = SimulatorEngine.RunSrtf("Custom Entry", enteredProcesses);
-                algorithm = "SRTF";
+
+                if (input == 4)
+                {
+                    Console.Write("Enter a quantum value (default = 4): ");
+                    if (!int.TryParse(Console.ReadLine(), out input))
+                    {
+                        Console.WriteLine("\nInvalid input. Please enter a number.");
+                        return null;
+                    }
+                    if (input != 4)
+                    {
+                        quantum = input;
+                    }
+                }
+                (algorithm, results, metrics) = SimulatorEngine.RunScheduler(input, enteredProcesses);
                 break;
             case 7:
-                result.MetricsExport.Add(("Custom Entry", algorithm, metrics));
-                result.ProcessExport.Add(("Custom Entry", algorithm, results));
+                if (results == null || metrics == null)
+                {
+                    Console.WriteLine("\nTo save data, run a scheduler first (options 1-6).");
+                }
+                else
+                {
+                    result.MetricsExport.Add(("Custom Entry", algorithm, metrics));
+                    result.ProcessExport.Add(("Custom Entry", algorithm, results));
+                }
+                Console.WriteLine($"Metrics count: {result.MetricsExport.Count}");
+                Console.WriteLine($"Process count: {result.ProcessExport.Count}");
                 break;
             case 8:
                 Console.WriteLine("Returning to menu.");
