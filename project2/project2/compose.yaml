@@ -1,7 +1,7 @@
 ﻿services:
-  project2:
-    image: project2
+  cpu-scheduler:
     build:
       context: .
-      dockerfile: project2/Dockerfile
-
+      dockerfile: Dockerfile
+    stdin_open: true
+    tty: true
