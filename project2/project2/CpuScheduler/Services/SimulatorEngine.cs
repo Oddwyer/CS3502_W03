@@ -230,7 +230,7 @@ public static class SimulatorEngine
         var sb = new StringBuilder();
 
         // Header row for csv file
-        sb.AppendLine("Algorithm,ProcessId,ArrivalTime,BurstTime,StartTime,FinishTime,WaitingTime,TurnaroundTime");
+        sb.AppendLine("Workload,Algorithm,ProcessId,ArrivalTime,BurstTime,StartTime,FinishTime,WaitingTime,TurnaroundTime");
 
         // For each algorithm in the list...
         foreach (var row in rows)
