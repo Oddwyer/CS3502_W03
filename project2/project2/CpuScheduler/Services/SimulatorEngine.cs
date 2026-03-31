@@ -3,6 +3,10 @@ using CpuScheduler.Schedulers;
 using System.Globalization;
 using System.Text;
 
+/// <summary>
+/// Simulator engine. Handles running of schedulers, process display, exporting of data
+/// </summary>
+
 namespace CpuScheduler.Services;
 
 public static class SimulatorEngine
@@ -45,7 +49,7 @@ public static class SimulatorEngine
     
     // Run one selected scheduler
     public static (string algorithm, List<SchedulingResult> results, PerformanceMetrics metrics) RunScheduler(int choice,
-        List<ProcessData> processes)
+        List<ProcessData> processes, int quantum)
     {
         // Reference lists for CSV exports.
         List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = new();
@@ -57,7 +61,7 @@ public static class SimulatorEngine
             { 1, ("FCFS", new FcfsScheduler()) },
             { 2, ("HRRN", new HrrnScheduler()) },
             { 3, ("Priority", new PriorityScheduler()) },
-            { 4, ("RR", new RRScheduler(4)) },
+            { 4, ("RR", new RRScheduler(quantum)) },
             { 5, ("SJF", new SjfScheduler()) },
             { 6, ("SRTF", new SrtfScheduler()) }
         };
@@ -78,6 +82,7 @@ public static class SimulatorEngine
         }
     }
 
+    
     //============================= Helper methods ============================== 
     
     // Run all algorithms using entered workload
@@ -86,39 +91,43 @@ public static class SimulatorEngine
         // Reference lists for CSV exports
         List<(string Workload, string Algorithm, PerformanceMetrics Metrics)> metricsExport = new();
         List<(string Workload, string Algorithm, List<SchedulingResult> Results)> processExport = new();
-
-        // Display processes
-        PrintProcesses(processes);
         
-        // Run all algorithms add save results for export
+        // Run all algorithms and save results for export
+        
+        // First Come, First Served
         var (fcfsResults, fcfsMetrics) = Run("FCFS", new FcfsScheduler(), processes);
         metricsExport.Add((workload, "FCFS", fcfsMetrics));
         processExport.Add((workload, "FCFS", fcfsResults));
-
-        var (sjfResults, sjfMetrics) = Run("SJF", new SjfScheduler(), processes);
-        metricsExport.Add((workload, "SJF", sjfMetrics));
-        processExport.Add((workload, "SJF", sjfResults));
-
-        var (rrResults, rrMetrics) = Run("RR", new RRScheduler(4), processes);
-        metricsExport.Add((workload, "RR", rrMetrics));
-        processExport.Add((workload, "RR", rrResults));
-
+        
+        // Highest Response Ratio Next
+        var (hrrnResults, hrrnMetrics) = Run("HRRN", new HrrnScheduler(), processes);
+        metricsExport.Add((workload, "HRRN", hrrnMetrics));
+        processExport.Add((workload, "HRRN", hrrnResults));
+        
+        // Priority
         var (priorityResults, priorityMetrics) = Run("Priority", new PriorityScheduler(), processes);
         metricsExport.Add((workload, "Priority", priorityMetrics));
         processExport.Add((workload, "Priority", priorityResults));
 
+        // Round Robin
+        var (rrResults, rrMetrics) = Run("RR", new RRScheduler(4), processes);
+        metricsExport.Add((workload, "RR", rrMetrics));
+        processExport.Add((workload, "RR", rrResults));
+        
+        // Shortest Job First
+        var (sjfResults, sjfMetrics) = Run("SJF", new SjfScheduler(), processes);
+        metricsExport.Add((workload, "SJF", sjfMetrics));
+        processExport.Add((workload, "SJF", sjfResults));
+
+        // Shortest Remaining Time First
         var (srtfResults, srtfMetrics) = Run("SRTF", new SrtfScheduler(), processes);
         metricsExport.Add((workload, "SRTF", srtfMetrics));
         processExport.Add((workload, "SRTF", srtfResults));
-
-        var (hrrnResults, hrrnMetrics) = Run("HRRN", new HrrnScheduler(), processes);
-        metricsExport.Add((workload, "HRRN", hrrnMetrics));
-        processExport.Add((workload, "HRRN", hrrnResults));
-
+        
         var fileName = workload.Replace(" ", "_").Replace("/", "_").ToLower();
         return new SavedResult(fileName, metricsExport, processExport);
     }
-
+    
     // Helper run method to abstract logic for calculating and displaying results
     private static (List<SchedulingResult> results, PerformanceMetrics metrics) Run(string algorithm,
         IScheduler scheduler,
@@ -130,7 +139,7 @@ public static class SimulatorEngine
         var calculator = new MetricsCalculator();
         var metrics = calculator.Calculate(results);
 
-        Console.WriteLine($"\n=== {algorithm} Scheduler ===");
+        Console.WriteLine($"\n=== {algorithm} Scheduled Processes ===");
 
         foreach (var result in results)
         {
@@ -161,8 +170,8 @@ public static class SimulatorEngine
                 $"P{i + 1}: Arrival Time: {processes[i].ArrivalTime}\tBurst Time: {processes[i].BurstTime}\tPriority: {processes[i].Priority}");
         }
     }
-
-
+    
+    
     //================= CSV export functionality for results data =================
     
     // Saving to specified folder (Results) in project path

@@ -3,18 +3,20 @@ using CpuScheduler.Models;
 namespace CpuScheduler.Schedulers;
 
 /// <summary>
-/// Round Robin Algorithm: Each process gets a time quantum, then cycles to next process.
+/// Round Robin Algorithm: Each process gets a time quantum, then cycles to next process
 /// </summary>
 public class RRScheduler : IScheduler
 {
     private int _quantumTime = 4;
-    // Method to execute processes according to Round Robin design
+    
+
+    // Initializes a new instance of the RRScheduler with a specified quantum time
     public RRScheduler(int quantumTime)
     {
         _quantumTime = quantumTime;
     }
     
-    // Method to include quantumTime to execute processes according to Round Robin design
+    // Method to execute processes according to Round Robin design
     public List<SchedulingResult> Schedule(List<ProcessData> processes)
         {
             var results = new List<SchedulingResult>();

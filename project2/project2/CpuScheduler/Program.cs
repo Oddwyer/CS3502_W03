@@ -52,7 +52,9 @@ do
 
 //==========================Menu Methods==============================
 
-static SavedResult CaseOne()
+
+// Predefined Workloads scenario.
+static SavedResult? CaseOne()
 {
     string predefined = """
 
@@ -79,16 +81,26 @@ static SavedResult CaseOne()
                         """;
     int input;
     Console.Write(predefined);
-    input = int.Parse(Console.ReadLine());
-    while (input < 1 || input < 12)
+    if (!int.TryParse(Console.ReadLine(), out input))
+    {
+        Console.WriteLine("\nInvalid input. Please enter a number.");
+        return null;
+    }
+
+    while (input < 1 || input > 12)
     {
         Console.WriteLine("Invalid entry.\nPlease select an option from the menu above: ");
-        input = int.Parse(Console.ReadLine());
+        if (!int.TryParse(Console.ReadLine(), out input))
+        {
+            Console.WriteLine("\nInvalid input. Please enter a number.");
+            return null;
+        }
     }
 
     return SimulatorEngine.RunWorkload(input);
 }
 
+// Custom Process Entry scenario.
 static SavedResult CaseTwo()
 {
     List<ProcessData> enteredProcesses = new List<ProcessData>();
@@ -151,25 +163,28 @@ static SavedResult CaseTwo()
                         2. Run Highest Response Ratio Next (HRRN) Scheduler
                         3. Run Priority Scheduler  
                         4. Run Round Robin (RR) Scheduler
-                        5. Run Shortest Job First (SFJ) Scheduler
+                        5. Run Shortest Job First (SJF) Scheduler
                         6. Run Shortest Remaining Time First (SRTF) Scheduler 
                         7. Add Results for Export
                         8. Return to Main Menu
 
-                        Please select an option above: 
+                        Please select an option from the menu above: 
                         """;
     
     do
     {
         Console.Write(predefined);
-        input = int.Parse(Console.ReadLine());
-        while (input < 1 || input > 8)
+        if (!int.TryParse(Console.ReadLine(), out input))
         {
-            Console.WriteLine("Invalid entry.\nPlease select an algorithm from the menu above: ");
-            input = int.Parse(Console.ReadLine());
+            Console.WriteLine("\nInvalid input. Please enter a number.");
+            continue;
         }
 
-        Console.WriteLine($"\n===================== Your CPU Simulation =========================");
+        if (input < 1 || input > 8)
+        {
+            Console.WriteLine("Invalid entry.\nPlease select an option from the menu above: ");
+            continue;
+        }
         
         // Run simulation based on selected scheduler and entered processes data
         switch (input)
@@ -180,21 +195,21 @@ static SavedResult CaseTwo()
             case 4:
             case 5: 
             case 6:
-
                 if (input == 4)
                 {
                     Console.Write("Enter a quantum value (default = 4): ");
-                    if (!int.TryParse(Console.ReadLine(), out input))
+                    if (!int.TryParse(Console.ReadLine(), out int enteredQuantum))
                     {
                         Console.WriteLine("\nInvalid input. Please enter a number.");
                         return null;
                     }
-                    if (input != 4)
+                    if (enteredQuantum != 4)
                     {
-                        quantum = input;
+                        quantum = enteredQuantum;
                     }
                 }
-                (algorithm, results, metrics) = SimulatorEngine.RunScheduler(input, enteredProcesses);
+                Console.WriteLine($"\n===================== Your CPU Simulation =========================");
+                (algorithm, results, metrics) = SimulatorEngine.RunScheduler(input, enteredProcesses,quantum);
                 break;
             case 7:
                 if (results == null || metrics == null)
@@ -218,6 +233,7 @@ static SavedResult CaseTwo()
     return result;
 }
 
+// Export results to CSV.
 static void CaseThree(SavedResult result)
 {
     if (result == null)

@@ -26,7 +26,7 @@ public class PriorityScheduler : IScheduler
                 continue;
             }
                 
-            // Select process with highest priority (highest number)
+            // Select process with the highest priority (highest number)
             var nextProcess = availableProcesses.OrderByDescending(p => p.Priority).ThenBy(p => p.ArrivalTime).First();
                 
             var startTime = Math.Max(currentTime, nextProcess.ArrivalTime);
