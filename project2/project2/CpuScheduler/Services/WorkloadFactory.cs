@@ -12,9 +12,9 @@ public static class WorkloadFactory
     {
         return new List<ProcessData>
         {
-            new("P1", burstTime: 4, priority: 0, arrivalTime: 0),
-            new("P2", burstTime: 3, priority: 0, arrivalTime: 1),
-            new("P3", burstTime: 2, priority: 0, arrivalTime: 2),
+            new("P1", burstTime: 4, priority: 1, arrivalTime: 0),
+            new("P2", burstTime: 3, priority: 2, arrivalTime: 1),
+            new("P3", burstTime: 2, priority: 3, arrivalTime: 2),
         };
     }
 
