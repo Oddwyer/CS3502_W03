@@ -25,3 +25,6 @@ file.txt
 # Editor backups
 *˜
 *.swp
+
+# OS files
+.DS_Store
