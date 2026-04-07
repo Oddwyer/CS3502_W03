@@ -1,0 +1,45 @@
+# Build outputs
+bin/
+obj/
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.rsuser
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# .NET / NuGet
+*.nupkg
+packages/
+*.dll
+*.exe
+*.pdb
+
+# Environment / secrets
+.env
+.env.*
+
+# Docker (optional tweak)
+docker-compose.override.yml
+
+# Test / coverage
+TestResults/
+coverage/
+
+# VS Code (if you ever use it)
+.vscode/
+
+# Generated files (optional)
+*.tmp
+*.temp
