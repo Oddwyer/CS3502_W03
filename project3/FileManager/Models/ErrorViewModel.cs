@@ -1,4 +1,4 @@
-namespace project3.Models;
+namespace FileManager.Models;
 
 public class ErrorViewModel
 {

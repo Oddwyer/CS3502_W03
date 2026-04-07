@@ -1,8 +1,8 @@
 using System.Diagnostics;
+using FileManager.Models;
 using Microsoft.AspNetCore.Mvc;
-using project3.Models;
 
-namespace project3.Controllers;
+namespace FileManager.Controllers;
 
 public class HomeController : Controller
 {
