@@ -84,7 +84,7 @@ public class Main {
         readButton.addActionListener(e -> {
             // Save selected file name from list
             String selected = fileList.getSelectedValue();
-            // Clear context (old state) between files
+            // Clear context (old state) first 
             textArea.setText("");
 
             // Error handling
