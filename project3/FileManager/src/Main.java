@@ -28,6 +28,13 @@ public class Main {
         window.setLayout(new BorderLayout()); // Simple layout
         window.setSize(500, 400); // Window size
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Properly close app
+        // Scrollbars
+        JScrollPane scrollPane = new JScrollPane(fileList,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        JScrollPane textScroll = new JScrollPane(textArea,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         //================== CRUD Logic + Buttons ========================
         // 1. "Create file" button + label
@@ -38,6 +45,7 @@ public class Main {
         JButton readButton = new JButton("Read File");
         // Display file content
         JTextArea textArea = new JTextArea(10, 30);
+        textArea.setEditable(false); // Do not permit typing until add update feature.
         JScrollPane textScroll = new JScrollPane(textArea);
 
         // 3. "Delete file" button + label
@@ -48,6 +56,7 @@ public class Main {
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new java.awt.GridLayout(1, 2));
         JPanel bottomPanel = new JPanel();
+        bottomPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10));
 
         // TOP PANEL: Current directory path
         JLabel pathLabel = new JLabel("Path:" + getCurrentPath());
