@@ -5,7 +5,7 @@
 // Window and button GUI imports
 
 import javax.swing.*;
-import java.awt.FlowLayout;
+import java.awt.*;
 
 // File logic imports
 import java.io.File;
@@ -17,42 +17,56 @@ import java.nio.file.Paths;
 
 public class Main {
     public static void main(String[] args) {
-        // File list (begin with current folder: ".") + Swing components for display
-        // TODO: Upgrade to File[] files and JList<File> to use Paths.getPath()
-        String[] files = new File(".").list();
+        // ================= File Directory + Display ============================
+        // Begin with current folder: "." + Swing components for display
+        // TODO: Upgrade to JList<File> to use Paths.getPath()
         JList<String> fileList = new JList<>(getFiles());
         JScrollPane scrollPane = new JScrollPane(fileList);
 
-        // Create label and display current directory path
-        JLabel pathLabel = new JLabel("Path:" + getCurrentPath());
-
-        // Create window, layout, and properties
+        // ================= Window Properties + Layout ====================
         JFrame window = new JFrame("File Manager");  // Title bar text
-        window.setLayout(new FlowLayout()); // Simple layout
+        window.setLayout(new BorderLayout()); // Simple layout
         window.setSize(500, 400); // Window size
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Properly close app
 
-        // "Create file" button + label
+        //================== CRUD Logic + Buttons ========================
+        // 1. "Create file" button + label
         JButton createButton = new JButton("Create File");
         JLabel label = new JLabel("No action yet");
 
-        // "Read file" button + label
+        // 2. "Read file" button + label
         JButton readButton = new JButton("Read File");
-        // Display content
+        // Display file content
         JTextArea textArea = new JTextArea(10, 30);
         JScrollPane textScroll = new JScrollPane(textArea);
 
-        // "Delete file" button + label
+        // 3. "Delete file" button + label
         JButton deleteButton = new JButton("Delete File");
 
+        // ======================== Window Panels ===========================
+        JPanel topPanel = new JPanel();
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new java.awt.GridLayout(1, 2));
+        JPanel bottomPanel = new JPanel();
+
+        // TOP PANEL: Current directory path
+        JLabel pathLabel = new JLabel("Path:" + getCurrentPath());
+        topPanel.add(pathLabel);
+
+        // CENTER PANEL: File directory details
+        centerPanel.add(scrollPane); // file list
+        centerPanel.add(textScroll); // file content
+
+        // BOTTOM PANEL: Buttons
+        bottomPanel.add(createButton);
+        bottomPanel.add(readButton);
+        bottomPanel.add(deleteButton);
+        bottomPanel.add(label);
+
         // Add created elements to window
-        window.add(pathLabel);
-        window.add(createButton);
-        window.add(readButton);
-        window.add(deleteButton);
-        window.add(label);
-        window.add(scrollPane);
-        window.add(textScroll);
+        window.add(topPanel, BorderLayout.NORTH);
+        window.add(centerPanel, BorderLayout.CENTER);
+        window.add(bottomPanel, BorderLayout.SOUTH);
 
         // Create button action upon click (updates label)
         createButton.addActionListener(e -> {
@@ -84,7 +98,7 @@ public class Main {
         readButton.addActionListener(e -> {
             // Save selected file name from list
             String selected = fileList.getSelectedValue();
-            // Clear context (old state) first 
+            // Clear context (old state) first
             textArea.setText("");
 
             // Error handling
