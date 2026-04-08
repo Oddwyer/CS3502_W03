@@ -31,7 +31,7 @@ public class Main {
         window.setSize(500, 400); // Window size
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Properly close app
         // Scrollbars
-        
+
         //================== CRUD Logic + Buttons ========================
         // 1. "Create file" button + label
         JButton createButton = new JButton("Create File");
