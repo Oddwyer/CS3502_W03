@@ -21,7 +21,9 @@ public class Main {
         // Begin with current folder: "." + Swing components for display
         // TODO: Upgrade to JList<File> to use Paths.getPath()
         JList<String> fileList = new JList<>(getFiles());
-        JScrollPane scrollPane = new JScrollPane(fileList);
+        JScrollPane scrollPane = new JScrollPane(fileList,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         // ================= Window Properties + Layout ====================
         JFrame window = new JFrame("File Manager");  // Title bar text
@@ -29,13 +31,7 @@ public class Main {
         window.setSize(500, 400); // Window size
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Properly close app
         // Scrollbars
-        JScrollPane scrollPane = new JScrollPane(fileList,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        JScrollPane textScroll = new JScrollPane(textArea,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-
+        
         //================== CRUD Logic + Buttons ========================
         // 1. "Create file" button + label
         JButton createButton = new JButton("Create File");
@@ -46,7 +42,9 @@ public class Main {
         // Display file content
         JTextArea textArea = new JTextArea(10, 30);
         textArea.setEditable(false); // Do not permit typing until add update feature.
-        JScrollPane textScroll = new JScrollPane(textArea);
+        JScrollPane textScroll = new JScrollPane(textArea,
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         // 3. "Delete file" button + label
         JButton deleteButton = new JButton("Delete File");
