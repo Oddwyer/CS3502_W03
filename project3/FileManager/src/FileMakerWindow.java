@@ -1,15 +1,18 @@
 // Amber O'Dwyer
 // CS3502 - W07 | Operating Systems
-// Project 3: File Manager - MainWindow (GUI Logic)
+// Project 3: File Manager - FileMakerWindow (GUI Logic)
 
 // Window and button GUI imports
-
 import javax.swing.*;
 import java.awt.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-public class WindowMaker{
+// Extends JFrame and instantiates GUI frame and layouts for file directory window. Keeps GUI logic
+// separate from file (domain) logic for clear separation of concerns.
+public class FileMakerWindow extends JFrame {
+
     // Framing properties
-    private JFrame window;
     private JScrollPane scrollPane;
     private JScrollPane textScroll;
     private JTextArea textArea;
@@ -22,50 +25,47 @@ public class WindowMaker{
     JButton deleteButton = new JButton("Delete File");
 
     // File properties
-    private String currentPath;
+    private Path currentPath;
     private JList<String> fileList;
     private FileManager fileManager;
     private OperationResult result;
 
-    public WindowMaker(FileManager fileManager) {
+    // Window constructor which includes logic to build window
+    public FileMakerWindow(FileManager fileManager) {
         this.fileManager = fileManager;
-        currentPath = fileManager.getCurrentPath();
+        super("File Manager"); // Title bar text
 
-        window = new JFrame("File Manager"); // Title bar text
-        pathLabel =  new JLabel("Path:" + fileManager.getCurrentPath());
-        fileList = new JList<>(fileManager.getFiles());
-    }
+        // Invoke fileManager for a path string and convert to a Path.
+        currentPath = Paths.get(fileManager.getCurrentPath());
+        fileList = new JList<>(fileManager.getFiles(currentPath));
 
-    // Create main window with properties, panels, layout
-    public JFrame createWindow() {
         // Window properties + layout
-        window.setLayout(new BorderLayout()); // Simple layout
-        window.setSize(500, 400); // Window size
-        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Properly close app
+        setLayout(new BorderLayout()); // Simple layout
+        setSize(500, 400); // Window size
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Properly close app
 
+        // Create panels
         JPanel topPanel = createTopPanel();
         JPanel centerPanel = createCenterPanel();
         JPanel bottomPanel = createBottomPanel();
 
-        // Add created elements to window
-        window.add(topPanel, BorderLayout.NORTH);
-        window.add(centerPanel, BorderLayout.CENTER);
-        window.add(bottomPanel, BorderLayout.SOUTH);
-
-        return window;
+        // Add and place panels in window
+        add(topPanel, BorderLayout.NORTH);
+        add(centerPanel, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    // ======================== Helper Methods ===========================
+    // ======================== Window Helper Methods ===========================
 
-
-    // TOP PANEL: Display current directory path
+    // TOP PANEL: Displays current directory path
     private JPanel createTopPanel() {
         JPanel topPanel = new JPanel();
+        pathLabel = new JLabel("Path:" + currentPath.toString());
         topPanel.add(pathLabel);
         return topPanel;
     }
 
-    // CENTER PANEL: Display file directory details
+    // CENTER PANEL: Displays file directory details
     private JPanel createCenterPanel() {
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new java.awt.GridLayout(1, 2));
@@ -82,7 +82,7 @@ public class WindowMaker{
         return centerPanel;
     }
 
-    // BOTTOM PANEL: File CRUD buttons + actions
+    // BOTTOM PANEL: Displays file CRUD buttons and related actions
     private JPanel createBottomPanel() {
         JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 10));
@@ -97,12 +97,14 @@ public class WindowMaker{
         return bottomPanel;
     }
 
-    // Refresh list
-    private void refresh(){
-        fileList.setListData(fileManager.getFiles());
+    // Refreshes list to show new files or removal of deleted files
+    private void refreshList(){
+        fileList.setListData(fileManager.getFiles(currentPath));
     }
 
     //================== CRUD Button Actions ========================
+
+    // createButton action that invokes createFile method in FileManager
     private void create() {
         createButton.addActionListener(e -> {
             // Save requested file name from pop-up input box
@@ -110,10 +112,10 @@ public class WindowMaker{
 
             // Create file
             if (fileName != null && !fileName.isEmpty()) {
-                result = fileManager.createFile(fileName);
+                result = fileManager.createFile(currentPath,  fileName);
                 if (result.isSuccess()) {
                     label.setText(result.getMessage());
-                    refresh();
+                    refreshList();
                 } else {
                     label.setText(result.getMessage());
 
@@ -124,6 +126,7 @@ public class WindowMaker{
         });
     }
 
+    // readButton action that invokes readFile method in FileManager
     private void read() {
         readButton.addActionListener(e -> {
             // Save selected file name from list
@@ -134,7 +137,8 @@ public class WindowMaker{
 
             // Read file
             if (selected != null) {
-                result = fileManager.readFile(selected);
+                Path selectedPath = currentPath.resolve(selected);
+                result = fileManager.readFile(selectedPath);
                 if (result.isSuccess()) {
                     textArea.setText(result.getContent());
                     label.setText(result.getMessage());
@@ -147,6 +151,7 @@ public class WindowMaker{
         });
     }
 
+    // deleteButton action that invokes deleteFile method in FileManager
     private void delete() {
         deleteButton.addActionListener(e -> {
             // Save selected file name from list
@@ -157,10 +162,11 @@ public class WindowMaker{
 
             // Read file
             if (selected != null) {
-                result = fileManager.deleteFile(selected);
+                Path selectedPath = currentPath.resolve(selected);
+                result = fileManager.deleteFile(selectedPath);
                 if (result.isSuccess()) {
                     label.setText(result.getMessage());
-                    refresh();
+                    refreshList();
                     textArea.setText(""); // clear content
                 } else {
                     label.setText(result.getMessage());

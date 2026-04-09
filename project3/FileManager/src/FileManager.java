@@ -1,16 +1,17 @@
 
 // File logic imports
-import java.nio.file.Paths;
+import java.nio.file.Path;
 
 public interface FileManager {
 
-    // Display current working directory
+    // Display current working directory path
     public String getCurrentPath();
 
-    //================== CRUD Logic ========================
-    public OperationResult createFile(String fileName);
-    public OperationResult readFile(String selected);
-    public OperationResult deleteFile(String selected);
-    public String[] getFiles();
+    // Display current directory's files
+    public String[] getFiles(Path directory);
 
+    //================== CRUD Logic ========================
+    public OperationResult createFile(Path directory, String fileName);
+    public OperationResult readFile(Path selected);
+    public OperationResult deleteFile(Path selected);
 }

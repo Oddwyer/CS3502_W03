@@ -2,8 +2,7 @@
 // CS3502 - W07 | Operating Systems
 // Project 3: File Manager - Main
 
-// Window and button GUI imports
-
+// GUI imports
 import javax.swing.*;
 
 // Entry point of the application. Initializes and displays the GUI
@@ -13,8 +12,7 @@ public class Main {
 
         SwingUtilities.invokeLater(() -> {
             FileManager fileManager = new LocalFileManager();
-            WindowMaker windowMaker = new WindowMaker(fileManager);
-            JFrame window = windowMaker.createWindow();
+            FileMakerWindow window = new FileMakerWindow(fileManager);
             window.setVisible(true);
         });
     }
