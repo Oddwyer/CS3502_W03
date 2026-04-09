@@ -14,4 +14,5 @@ public interface FileManager {
     public OperationResult createFile(Path directory, String fileName);
     public OperationResult readFile(Path selected);
     public OperationResult deleteFile(Path selected);
+    public OperationResult updateFile(Path selected, String newContent);
 }

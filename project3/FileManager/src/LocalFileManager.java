@@ -7,8 +7,8 @@
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 // Implements FileManager and handles all file logic. Keeps file (domain) logic separate from GUI logic for
 // clear separation of concerns.
@@ -25,8 +25,9 @@ public class LocalFileManager implements FileManager {
 
     //================== CRUD Logic ========================
 
-    // Creates file at given location with given name and returns whether
-    // file creation was successful along with feedback message
+    /*Creates file at given location with given name and returns whether  file creation was successful
+    along with feedback message*/
+
     public OperationResult createFile(Path directory, String fileName) {
         boolean success = false;
         String message;
@@ -47,11 +48,12 @@ public class LocalFileManager implements FileManager {
         } catch (IOException ex) {
             message = "Error creating file.";
         }
+        // Return packaged result details
         return new OperationResult(success, message, content);
     }
 
-    // Reads selected file and returns whether successful (if so, displays any file content)
-    // along with feedback message
+    /* Reads selected file and returns whether successful (if so, displays any file content)
+    along with feedback message*/
     public OperationResult readFile(Path selected) {
         boolean success = false;
         String message;
@@ -66,10 +68,48 @@ public class LocalFileManager implements FileManager {
         } catch (Exception ex) {
             message = "Error reading file.";
         }
+        // Return packaged result details
         return new OperationResult(success, message, content);
     }
 
-    // Deletes file and returns whether successful along with feedback message
+    /* Updates file and returns whether successful along with feedback message*/
+    public OperationResult updateFile(Path selected, String newContent) {
+        boolean success = false;
+        String message;
+        String content = "";
+
+        // Error handling
+        if (selected != null) {
+            // Create a file pointer to the selected path
+            File updateFile = selected.toFile();
+            // If the file exists, try to update
+            try{
+                // Error handling
+                // Check if file exists...
+                if (!updateFile.exists()) {
+                    message = "File not found.";
+                    // Check if a file...
+                } else if (!updateFile.isFile()) {
+                    message = "Cannot update a directory.";
+                } else if (!updateFile.canWrite()) {
+                    message = "File is read-only or not writable.";
+                } else {
+                    // Attempt to update file: erase old content and replace with revised/new content
+                    Files.writeString(selected, newContent, StandardOpenOption.TRUNCATE_EXISTING);
+                    message = "Updated: " + selected.getFileName();
+                    success = true;
+                }
+            } catch(IOException ex){
+                message = "Could not update file.";
+            }
+        } else {
+            message = "No file selected.";
+        }
+        // Return packaged result details
+        return new OperationResult(success, message, content);
+    }
+
+    /* Deletes file and returns whether successful along with feedback message*/
     public OperationResult deleteFile(Path selected) {
         boolean success = false;
         String message;
@@ -79,16 +119,22 @@ public class LocalFileManager implements FileManager {
         if (selected != null) {
             // Create a file pointer to the selected path
             File deleteFile = selected.toFile();
-            // If the file exists, delete the file
-            if (deleteFile.isFile()) {
+
+            // Error handling
+            // Check if file exists...
+            if (!deleteFile.exists()) {
+                message = "File not found.";
+                // Check if a file...
+            } else if (!deleteFile.isFile()) {
+                message = "Cannot delete a directory.";
+            } else {
+                // Attempt to delete file
                 if (deleteFile.delete()) {
                     message = "Deleted: " + selected.getFileName();
                     success = true;
                 } else {
                     message = "Could not delete file.";
                 }
-            } else {
-                message = "Cannot delete a directory.";
             }
         } else {
             message = "No file selected.";
