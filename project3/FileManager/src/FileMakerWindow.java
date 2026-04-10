@@ -3,6 +3,7 @@
 // Project 3: File Manager - FileMakerWindow (GUI Logic)
 
 // Window and button GUI imports
+
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
@@ -18,14 +19,13 @@ public class FileMakerWindow extends JFrame {
     private JTextArea textArea;
     private JLabel label;
     private JLabel pathLabel;
-    JPanel centerPanel;
-    JPanel bottomPanel;
 
     // Window CRUD buttons
     JButton createButton;
     JButton readButton;
     JButton updateButton;
     JButton deleteButton;
+    JButton renameButton;
 
     // File properties
     private Path currentPath;
@@ -56,6 +56,7 @@ public class FileMakerWindow extends JFrame {
         readButton = new JButton("Read File");
         updateButton = new JButton("Update File");
         deleteButton = new JButton("Delete File");
+        renameButton = new JButton("Rename File");
         setLayout(new BorderLayout()); // Simple layout
         setSize(600, 400); // Window size
         label.setHorizontalAlignment(SwingConstants.CENTER);
@@ -98,16 +99,19 @@ public class FileMakerWindow extends JFrame {
         // Row 1: Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         buttonPanel.add(createButton);
-        create();
+        createFile();
 
         buttonPanel.add(readButton);
-        read();
+        readFile();
 
         buttonPanel.add(updateButton);
-        update();
+        updateFile();
 
         buttonPanel.add(deleteButton);
-        delete();
+        deleteFile();
+
+        buttonPanel.add(renameButton);
+        renameFile();
 
         // Row 2: Status label
         JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -120,26 +124,26 @@ public class FileMakerWindow extends JFrame {
         return panel;
     }
 
-    // Refreshes list to show new files or removal of deleted files
-    private void refreshList(){
+    // Refreshes directory to show new files or removal of deleted files
+    private void refreshDirectory() {
         fileList.setListData(fileManager.getFiles(currentPath));
     }
 
     //================== CRUD Button Actions ========================
 
     // createButton action that invokes FileManager's createFile method
-    private void create() {
+    private void createFile() {
         createButton.addActionListener(e -> {
             // Save requested file name from pop-up input box
             String fileName = javax.swing.JOptionPane.showInputDialog("Enter file name:");
 
-            // Create file
+            // Error Handling: create file if file name provided
             if (fileName != null && !fileName.isEmpty()) {
                 // Save operation result from invoking createFile and display accordingly
-                result = fileManager.createFile(currentPath,  fileName);
+                result = fileManager.createFile(currentPath, fileName);
                 if (result.isSuccess()) {
                     label.setText(result.getMessage());
-                    refreshList();
+                    refreshDirectory();
                 } else {
                     label.setText(result.getMessage());
 
@@ -151,7 +155,7 @@ public class FileMakerWindow extends JFrame {
     }
 
     // readButton action that invokes FileManager's readFile method
-    private void read() {
+    private void readFile() {
         readButton.addActionListener(e -> {
             // Save selected file name from list
             String selected = fileList.getSelectedValue();
@@ -159,7 +163,7 @@ public class FileMakerWindow extends JFrame {
             // Clear context (old state) first
             textArea.setText("");
 
-            // Read file
+            // Error handling: if valid selection, read file
             if (selected != null) {
                 // Save selected path
                 Path selectedPath = currentPath.resolve(selected);
@@ -179,12 +183,12 @@ public class FileMakerWindow extends JFrame {
     }
 
     // updateButton action that invokes FileManager's updateFile method
-    private void update() {
+    private void updateFile() {
         updateButton.addActionListener(e -> {
             // Save selected file name from list
             String selected = fileList.getSelectedValue();
 
-            // Update file
+            // Error handling: if valid selection, update file
             if (selected != null) {
                 // Save selected path
                 Path selectedPath = currentPath.resolve(selected);
@@ -194,7 +198,7 @@ public class FileMakerWindow extends JFrame {
                 result = fileManager.updateFile(selectedPath, newContent);
                 if (result.isSuccess()) {
                     label.setText(result.getMessage());
-                    refreshList();
+                    refreshDirectory();
                 } else {
                     label.setText(result.getMessage());
                 }
@@ -204,8 +208,37 @@ public class FileMakerWindow extends JFrame {
         });
     }
 
+    // renameButton action that invokes FileManager's renameFile method
+    private void renameFile() {
+        renameButton.addActionListener(e -> {
+            // Save selected file name from list
+            String selected = fileList.getSelectedValue();
+
+            // Error handling: if valid selection, request new name for file
+            if (selected != null) {
+                // Save requested file name from pop-up input box
+                String fileName = javax.swing.JOptionPane.showInputDialog("Enter new file name:");
+                // If file name provided, identify file path and rename file
+                if (fileName != null && !fileName.isEmpty()) {
+                    // Save selected path
+                    Path selectedPath = currentPath.resolve(selected);
+                    Path newPath = currentPath.resolve(fileName);
+                    result = fileManager.renameFile(selectedPath, newPath);
+                    if (result.isSuccess()) {
+                        label.setText(result.getMessage());
+                        refreshDirectory();
+                    } else {
+                        label.setText("Rename not implemented yet.");
+                    }
+                } else {
+                    label.setText("No file name entered.");
+                }
+            }
+        });
+    }
+
     // deleteButton action that invokes FileManager's deleteFile method
-    private void delete() {
+    private void deleteFile() {
         deleteButton.addActionListener(e -> {
             // Save selected file name from list
             String selected = fileList.getSelectedValue();
@@ -221,7 +254,7 @@ public class FileMakerWindow extends JFrame {
                 result = fileManager.deleteFile(selectedPath);
                 if (result.isSuccess()) {
                     label.setText(result.getMessage());
-                    refreshList();
+                    refreshDirectory();
                     textArea.setText(""); // clear content
                 } else {
                     label.setText(result.getMessage());

@@ -83,7 +83,7 @@ public class LocalFileManager implements FileManager {
             // Create a file pointer to the selected path
             File updateFile = selected.toFile();
             // If the file exists, try to update
-            try{
+            try {
                 // Error handling
                 // Check if file exists...
                 if (!updateFile.exists()) {
@@ -99,7 +99,7 @@ public class LocalFileManager implements FileManager {
                     message = "Updated: " + selected.getFileName();
                     success = true;
                 }
-            } catch(IOException ex){
+            } catch (IOException ex) {
                 message = "Could not update file.";
             }
         } else {
@@ -142,6 +142,40 @@ public class LocalFileManager implements FileManager {
         return new OperationResult(success, message, content);
     }
 
+    /* Updates file and returns whether successful along with feedback message*/
+    public OperationResult renameFile(Path selected, Path newPath) {
+        boolean success = false;
+        String message;
+        String content = "";
+
+        // Error handling
+        if (selected != null) {
+            // Create a file pointer to the selected path
+            File renameFile = selected.toFile();
+            // If the file exists, try to update
+            try {
+                // Error handling
+                // Check if file exists...
+                if (!renameFile.exists()) {
+                    message = "File not found.";
+                    // Check if a file...
+                } else if (!renameFile.isFile()) {
+                    message = "Cannot rename a directory.";
+                } else {
+                    // Attempt to rename file
+                    Files.move(selected, newPath);
+                    message = "Renamed: " + selected.getFileName() + " to " + newPath.getFileName();
+                    success = true;
+                }
+            } catch (IOException ex) {
+                message = "Could not rename file.";
+            }
+        } else {
+            message = "No file selected.";
+        }
+        // Return packaged result details
+        return new OperationResult(success, message, content);
+    }
     //================Helper Methods===================
 
     // Returns current file listing at designated path
