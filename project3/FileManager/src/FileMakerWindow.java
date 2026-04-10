@@ -20,7 +20,6 @@ public class FileMakerWindow extends JFrame {
     private JLabel pathLabel;
     JPanel centerPanel;
     JPanel bottomPanel;
-    JPanel topPanel;
 
     // Window CRUD buttons
     JButton createButton;
@@ -42,6 +41,8 @@ public class FileMakerWindow extends JFrame {
         currentPath = Paths.get(fileManager.getCurrentPath());
         pathLabel = new JLabel("Path:" + currentPath.toString());
         fileList = new JList<>(fileManager.getFiles(currentPath));
+
+        // Window properties + layout
         textArea = new JTextArea(10, 30);
         textArea.setEditable(true);
         scrollPane = new JScrollPane(fileList,
@@ -55,20 +56,15 @@ public class FileMakerWindow extends JFrame {
         readButton = new JButton("Read File");
         updateButton = new JButton("Update File");
         deleteButton = new JButton("Delete File");
-
-
-        // Window properties + layout
         setLayout(new BorderLayout()); // Simple layout
         setSize(600, 400); // Window size
+        label.setHorizontalAlignment(SwingConstants.CENTER);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Properly close app
 
-        // Create panels
-        topPanel = new JPanel();
-        centerPanel = new JPanel();
-        bottomPanel = new JPanel();
-        topPanel = createTopPanel();
-        centerPanel = createCenterPanel();
-        bottomPanel = createBottomPanel();
+        // Window panels
+        JPanel topPanel = createTopPanel();
+        JPanel centerPanel = createCenterPanel();
+        JPanel bottomPanel = createBottomPanel();
 
         // Add and place panels in window
         add(topPanel, BorderLayout.NORTH);
@@ -80,21 +76,24 @@ public class FileMakerWindow extends JFrame {
 
     // TOP PANEL: Displays current directory path
     private JPanel createTopPanel() {
-        topPanel.add(pathLabel);
-        return topPanel;
+        JPanel panel = new JPanel();
+        panel.add(pathLabel);
+        return panel;
     }
 
     // CENTER PANEL: Displays file directory details
     private JPanel createCenterPanel() {
-        centerPanel.setLayout(new java.awt.GridLayout(1, 2));
-        centerPanel.add(scrollPane); // file list
-        centerPanel.add(textScroll); // file content
-        return centerPanel;
+        JPanel panel = new JPanel();
+        panel.setLayout(new java.awt.GridLayout(1, 2));
+        panel.add(scrollPane); // file list
+        panel.add(textScroll); // file content
+        return panel;
     }
 
     // BOTTOM PANEL: Displays file CRUD buttons and related actions
     private JPanel createBottomPanel() {
-        bottomPanel.setLayout(new BorderLayout());
+        JPanel panel = new JPanel();
+        panel.setLayout(new BorderLayout());
 
         // Row 1: Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
@@ -115,10 +114,10 @@ public class FileMakerWindow extends JFrame {
         statusPanel.add(label);
 
         // Add both rows to bottom panel
-        bottomPanel.add(buttonPanel, BorderLayout.NORTH);
-        bottomPanel.add(statusPanel, BorderLayout.SOUTH);
+        panel.add(buttonPanel, BorderLayout.NORTH);
+        panel.add(statusPanel, BorderLayout.SOUTH);
 
-        return bottomPanel;
+        return panel;
     }
 
     // Refreshes list to show new files or removal of deleted files
