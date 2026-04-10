@@ -15,5 +15,5 @@ public interface FileManager {
     public OperationResult readFile(Path selected);
     public OperationResult deleteFile(Path selected);
     public OperationResult updateFile(Path selected, String newContent);
-    public OperationResult renameFile(Path selected, Path newPath);
+    public OperationResult renameItem(Path selected, Path newPath);
 }

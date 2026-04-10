@@ -56,7 +56,7 @@ public class FileMakerWindow extends JFrame {
         readButton = new JButton("Read File");
         updateButton = new JButton("Update File");
         deleteButton = new JButton("Delete File");
-        renameButton = new JButton("Rename File");
+        renameButton = new JButton("Rename Item");
         setLayout(new BorderLayout()); // Simple layout
         setSize(600, 400); // Window size
         label.setHorizontalAlignment(SwingConstants.CENTER);
@@ -221,21 +221,24 @@ public class FileMakerWindow extends JFrame {
                 // If file name provided, identify file path and rename file
                 if (fileName != null && !fileName.isEmpty()) {
                     // Save selected path
-                    Path selectedPath = currentPath.resolve(selected);
+                    Path oldPath = currentPath.resolve(selected);
                     Path newPath = currentPath.resolve(fileName);
-                    result = fileManager.renameFile(selectedPath, newPath);
+                    result = fileManager.renameItem(oldPath, newPath);
                     if (result.isSuccess()) {
                         label.setText(result.getMessage());
                         refreshDirectory();
                     } else {
-                        label.setText("Rename not implemented yet.");
+                        label.setText(result.getMessage());
                     }
                 } else {
                     label.setText("No file name entered.");
                 }
+            }else {
+                label.setText("No file or directory selected.");
             }
         });
     }
+
 
     // deleteButton action that invokes FileManager's deleteFile method
     private void deleteFile() {

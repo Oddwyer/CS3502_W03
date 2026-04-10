@@ -78,32 +78,26 @@ public class LocalFileManager implements FileManager {
         String message;
         String content = "";
 
-        // Error handling
-        if (selected != null) {
-            // Create a file pointer to the selected path
-            File updateFile = selected.toFile();
-            // If the file exists, try to update
-            try {
-                // Error handling
-                // Check if file exists...
-                if (!updateFile.exists()) {
-                    message = "File not found.";
-                    // Check if a file...
-                } else if (!updateFile.isFile()) {
-                    message = "Cannot update a directory.";
-                } else if (!updateFile.canWrite()) {
-                    message = "File is read-only or not writable.";
-                } else {
-                    // Attempt to update file: erase old content and replace with revised/new content
-                    Files.writeString(selected, newContent, StandardOpenOption.TRUNCATE_EXISTING);
-                    message = "Updated: " + selected.getFileName();
-                    success = true;
-                }
-            } catch (IOException ex) {
-                message = "Could not update file.";
+        // Create a file pointer to the selected path
+        File updateFile = selected.toFile();
+        // If the file exists, try to update
+        try {
+            // Error handling: check if file exists...
+            if (!updateFile.exists()) {
+                message = "File not found.";
+                // Check if a file...
+            } else if (!updateFile.isFile()) {
+                message = "Cannot update a directory.";
+            } else if (!updateFile.canWrite()) {
+                message = "File is read-only or not writable.";
+            } else {
+                // Attempt to update file: erase old content and replace with revised/new content
+                Files.writeString(selected, newContent, StandardOpenOption.TRUNCATE_EXISTING);
+                message = "Updated: " + selected.getFileName();
+                success = true;
             }
-        } else {
-            message = "No file selected.";
+        } catch (IOException ex) {
+            message = "Could not update file.";
         }
         // Return packaged result details
         return new OperationResult(success, message, content);
@@ -112,16 +106,14 @@ public class LocalFileManager implements FileManager {
     /* Deletes file and returns whether successful along with feedback message*/
     public OperationResult deleteFile(Path selected) {
         boolean success = false;
-        String message;
+        String message = "";
         String content = "";
 
-        // Error handling
-        if (selected != null) {
-            // Create a file pointer to the selected path
-            File deleteFile = selected.toFile();
-
-            // Error handling
-            // Check if file exists...
+        // Create a file pointer to the selected path
+        File deleteFile = selected.toFile();
+        // If the file exists, try to delete
+        try {
+            // Error handling: check if file exists...
             if (!deleteFile.exists()) {
                 message = "File not found.";
                 // Check if a file...
@@ -132,47 +124,43 @@ public class LocalFileManager implements FileManager {
                 if (deleteFile.delete()) {
                     message = "Deleted: " + selected.getFileName();
                     success = true;
-                } else {
-                    message = "Could not delete file.";
                 }
             }
-        } else {
-            message = "No file selected.";
+        } catch (Exception ex) {
+            message = "Could not delete file.";
         }
+        // Return packaged result details
         return new OperationResult(success, message, content);
     }
 
     /* Updates file and returns whether successful along with feedback message*/
-    public OperationResult renameFile(Path selected, Path newPath) {
+    public OperationResult renameItem(Path oldPath, Path newPath) {
         boolean success = false;
-        String message;
+        String message = "";
         String content = "";
 
         // Error handling
-        if (selected != null) {
+        if (oldPath != null) {
             // Create a file pointer to the selected path
-            File renameFile = selected.toFile();
             // If the file exists, try to update
             try {
                 // Error handling
                 // Check if file exists...
-                if (!renameFile.exists()) {
-                    message = "File not found.";
+                if (!Files.exists(oldPath)) {
+                    message = "File or directory not found.";
                     // Check if a file...
-                } else if (!renameFile.isFile()) {
-                    message = "Cannot rename a directory.";
+                } else if (Files.exists(newPath)) {
+                    message = "An file or directory with that name already exists.";
                 } else {
-                    // Attempt to rename file
-                    Files.move(selected, newPath);
-                    message = "Renamed: " + selected.getFileName() + " to " + newPath.getFileName();
+                    // Attempt to rename file by moving path
+                    Files.move(oldPath, newPath);
+                    message = "Renamed: " + oldPath.getFileName() + " to " + newPath.getFileName();
                     success = true;
                 }
             } catch (IOException ex) {
-                message = "Could not rename file.";
+                message = "Could not rename item.";
             }
-        } else {
-            message = "No file selected.";
-        }
+         }
         // Return packaged result details
         return new OperationResult(success, message, content);
     }
