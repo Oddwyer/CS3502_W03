@@ -71,11 +71,12 @@ static SavedResult? CaseOne()
                         7. Mixed Burst
                         8. Starvation
                         9. Priority/Inversion
+                        10. Idle Gap
                         
                         Size:
-                        10. Small
-                        11. Medium
-                        12. Large
+                        11. Small
+                        12. Medium
+                        13. Large
                         
                         Please select a workload from the menu above: 
                         """;
@@ -87,7 +88,7 @@ static SavedResult? CaseOne()
         return null;
     }
 
-    while (input < 1 || input > 12)
+    while (input < 1 || input > 13)
     {
         Console.WriteLine("Invalid entry.\nPlease select an option from the menu above: ");
         if (!int.TryParse(Console.ReadLine(), out input))

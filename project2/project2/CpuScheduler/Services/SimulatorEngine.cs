@@ -26,9 +26,10 @@ public static class SimulatorEngine
             { 7, ("Mixed Burst", WorkloadFactory.CreateBurstMixWorkload) },
             { 8, ("Starvation", WorkloadFactory.CreateStarvationWorkload) },
             { 9, ("Priority/Inversion", WorkloadFactory.CreatePriorityInversionWorkload) },
-            { 10, ("Small", WorkloadFactory.CreateSmallVerificationWorkload) },
-            { 11, ("Medium", WorkloadFactory.CreateMediumWorkload) },
-            { 12, ("Large", WorkloadFactory.CreateLargeWorkload) }
+            { 10, ("Idle Gap", WorkloadFactory.CreateIdleGapWorkload) },
+            { 11, ("Small", WorkloadFactory.CreateSmallVerificationWorkload) },
+            { 12, ("Medium", WorkloadFactory.CreateMediumWorkload) },
+            { 13, ("Large", WorkloadFactory.CreateLargeWorkload) }
         };
 
         // Search for workload choice in dictionary. If exists, run workload against all schedulers

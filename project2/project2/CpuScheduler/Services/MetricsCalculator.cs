@@ -33,11 +33,14 @@ public class MetricsCalculator
             return new PerformanceMetrics();
         }
         
-        // 3. CPU Utilization (%) - (total burst time / total time) * 100
-        var cpuUtilization = (schedulingResults.Sum(r => r.BurstTime) / totalTime) * 100;
+        // 3. CPU Utilization (%) - (total burst time / total elapsed time) * 100
+        var firstArrival = schedulingResults.Min(r => r.ArrivalTime);
+        var lastFinish = schedulingResults.Max(r => r.FinishTime);
+        var totalElapsedTime = Math.Max(1,lastFinish - firstArrival);
+        var cpuUtilization = (schedulingResults.Sum(r => r.BurstTime) / (double) totalElapsedTime) * 100;
         
-        // 4. Throughput (processes/second) - number of processes / total time
-        var throughPut = schedulingResults.Count / totalTime;
+        // 4. Throughput (processes/second) - number of processes / total elapsed time
+        var throughPut = schedulingResults.Count / (double) totalElapsedTime;
         
         // 5. Response Time (RT) [Optional] - average time from arrival to first execution
         var responseTime = schedulingResults.Average(r => r.StartTime - r.ArrivalTime);

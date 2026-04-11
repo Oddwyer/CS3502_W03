@@ -219,4 +219,14 @@ public static class WorkloadFactory
             new("P100", 99, 10, 4)
         };
     }
+    
+    public static List<ProcessData> CreateIdleGapWorkload()
+    {
+        return new List<ProcessData>
+        {
+            new("P1", burstTime: 3, priority: 1, arrivalTime: 5),
+            new("P2", burstTime: 2, priority: 2, arrivalTime: 10),
+            new("P3", burstTime: 1, priority: 1, arrivalTime: 15)
+        };
+    }
 }
