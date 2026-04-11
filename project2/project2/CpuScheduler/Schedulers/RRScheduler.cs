@@ -19,7 +19,6 @@ public class RRScheduler : IScheduler
     // Method to execute processes according to Round Robin design
     public List<SchedulingResult> Schedule(List<ProcessData> processes)
         {
-            var results = new List<SchedulingResult>();
             var currentTime = 0;
             var processQueue = new Queue<ProcessData>();
             var processResults = new Dictionary<string, SchedulingResult>();

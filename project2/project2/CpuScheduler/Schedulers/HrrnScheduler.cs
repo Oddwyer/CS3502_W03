@@ -5,7 +5,7 @@ namespace CpuScheduler.Schedulers;
 /// <summary>
 /// Highest Response Ratio Next Algorithm: Each process is weighed by response ratio (waiting time + burst time)/ burst time
 /// This is done to balance short jobs with fairness (considers waiting time)
-/// If more than one process has the exact same ratio, then priority is given to the process with the earliest arrival
+/// If more than one process has the exact same ratio, then priority is used as the tie-breaker
 /// </summary>
 
 
@@ -14,7 +14,6 @@ public class HrrnScheduler: IScheduler
     // Method to execute processes according to HRRN design
     public List<SchedulingResult> Schedule(List<ProcessData> processes)
     {
-        var results = new List<SchedulingResult>();
         var currentTime = 0;
         var processResults = new Dictionary<string, SchedulingResult>();
         var currentProcesses = new List<ProcessData>(processes);
@@ -38,7 +37,7 @@ public class HrrnScheduler: IScheduler
         while (currentProcesses.Count > 0)
         {
             // Assign current process to the process with the highest response ratio
-            // If ratios are the same for one than one process, earliest arrival is tie-breaker
+            // If ratios are the same for one than one process, priority is the tie-breaker
             var selectedProcess = currentProcesses
                 .Where(p => p.ArrivalTime <= currentTime)
                 .OrderByDescending(p =>
@@ -46,7 +45,7 @@ public class HrrnScheduler: IScheduler
                         var waitingTime = currentTime - p.ArrivalTime;
                         return (waitingTime + p.BurstTime) / (double) p.BurstTime;
                     })
-                    .ThenBy(p => p.ArrivalTime).FirstOrDefault();
+                    .ThenByDescending(p => p.Priority).FirstOrDefault();
             var currentProcess = selectedProcess;
            
             // Error handling: there may be no process available at the current time

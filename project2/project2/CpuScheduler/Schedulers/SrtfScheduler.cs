@@ -12,7 +12,6 @@ public class SrtfScheduler: IScheduler
     // Method to execute processes according to SRTF design
     public List<SchedulingResult> Schedule(List<ProcessData> processes)
     {
-        var results = new List<SchedulingResult>();
         var currentTime = 0;
         var processResults = new Dictionary<string, SchedulingResult>();
         var remainingBurstTimes = new Dictionary<string, int>();
