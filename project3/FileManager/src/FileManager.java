@@ -12,8 +12,9 @@ public interface FileManager {
 
     //================== CRUD Logic ========================
     public OperationResult createFile(Path directory, String fileName);
+    public OperationResult createDirectory(Path directory, String folderName);
     public OperationResult readFile(Path selected);
-    public OperationResult deleteFile(Path selected);
+    public OperationResult deleteItem(Path selected);
     public OperationResult updateFile(Path selected, String newContent);
     public OperationResult renameItem(Path selected, Path newPath);
 }

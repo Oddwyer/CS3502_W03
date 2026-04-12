@@ -23,11 +23,10 @@ public class LocalFileManager implements FileManager {
         return System.getProperty("user.dir");
     }
 
-    //================== CRUD Logic ========================
+    //============================================== CRUD Logic ============================================
 
     /*Creates file at given location with given name and returns whether  file creation was successful
     along with feedback message*/
-
     public OperationResult createFile(Path directory, String fileName) {
         boolean success = false;
         String message;
@@ -35,18 +34,47 @@ public class LocalFileManager implements FileManager {
 
         // Error handling
         try {
-            // Create a file pointer to: current path / fileName
-            File file = directory.resolve(fileName).toFile();
+            // Create a path to: current path / fileName
+            Path newFile = directory.resolve(fileName);
 
             // Create file if it does not already exist; if it does return notice
-            if (file.createNewFile()) {
+            if (Files.exists(newFile)) {
+                message = "File already exists.";
+            } else {
+                Files.createFile(newFile);
                 message = "File created: " + fileName;
                 success = true;
-            } else {
-                message = "File already exists.";
             }
         } catch (IOException ex) {
             message = "Error creating file.";
+        }
+        // Return packaged result details
+        return new OperationResult(success, message, content);
+    }
+
+    /*Creates directory folder at given location with given name and returns whether directory creation was successful
+    along with feedback message*/
+    public OperationResult createDirectory(Path directory, String folderName) {
+        boolean success = false;
+        String message;
+        String content = "";
+
+        // Error handling
+        try {
+            // Create a path pointer to: current path / directory
+            Path newDirectory = directory.resolve(folderName);
+
+            // Create directory if it does not already exist; if it does return notice
+
+            if (Files.exists(newDirectory)) {
+                message = "Directory folder already exists.";
+            } else {
+                Files.createDirectory(newDirectory);
+                message = "Directory created: " + folderName;
+                success = true;
+            }
+        } catch (IOException ex) {
+            message = "Error creating directory.";
         }
         // Return packaged result details
         return new OperationResult(success, message, content);
@@ -78,17 +106,16 @@ public class LocalFileManager implements FileManager {
         String message;
         String content = "";
 
-        // Create a file pointer to the selected path
-        File updateFile = selected.toFile();
         // If the file exists, try to update
         try {
-            // Error handling: check if file exists...
-            if (!updateFile.exists()) {
+            // Error handling: check if file exists
+            if (!Files.exists(selected)) {
                 message = "File not found.";
-                // Check if a file...
-            } else if (!updateFile.isFile()) {
+                // Check if a file and not a directory
+            } else if (Files.isDirectory(selected)) {
                 message = "Cannot update a directory.";
-            } else if (!updateFile.canWrite()) {
+                // Check if file is writable
+            } else if (!Files.isWritable(selected)) {
                 message = "File is read-only or not writable.";
             } else {
                 // Attempt to update file: erase old content and replace with revised/new content
@@ -103,31 +130,38 @@ public class LocalFileManager implements FileManager {
         return new OperationResult(success, message, content);
     }
 
-    /* Deletes file and returns whether successful along with feedback message*/
-    public OperationResult deleteFile(Path selected) {
+    /* Deletes file or directory (if not empty) and returns whether successful along with feedback message*/
+    public OperationResult deleteItem(Path selected) {
         boolean success = false;
-        String message = "";
+        String message;
         String content = "";
 
-        // Create a file pointer to the selected path
-        File deleteFile = selected.toFile();
         // If the file exists, try to delete
         try {
-            // Error handling: check if file exists...
-            if (!deleteFile.exists()) {
-                message = "File not found.";
-                // Check if a file...
-            } else if (!deleteFile.isFile()) {
-                message = "Cannot delete a directory.";
-            } else {
-                // Attempt to delete file
-                if (deleteFile.delete()) {
-                    message = "Deleted: " + selected.getFileName();
+            // Error handling: check if file/directory exists
+            if (!Files.exists(selected)) {
+                message = "File or directory not found.";
+            }
+            // Check if a directory and whether directory contains files
+            else if (Files.isDirectory(selected)) {
+                try (var files = Files.list(selected)){
+                if(files.findAny().isPresent()){
+                    message = "Cannot delete a non-empty directory.";
+                } else {
+                    Files.delete(selected);
+                    message = "Deleted directory: " + selected.getFileName();
                     success = true;
                 }
+            } } // If not a directory, delete the file
+            else {
+                Files.delete(selected);
+                message = "Deleted file: " + selected.getFileName();
+                success = true;
             }
+
+            // Handles both tries above: directory existence, directory containment
         } catch (Exception ex) {
-            message = "Could not delete file.";
+            message = "Could not delete item.";
         }
         // Return packaged result details
         return new OperationResult(success, message, content);
@@ -160,11 +194,12 @@ public class LocalFileManager implements FileManager {
             } catch (IOException ex) {
                 message = "Could not rename item.";
             }
-         }
+        }
         // Return packaged result details
         return new OperationResult(success, message, content);
     }
-    //================Helper Methods===================
+
+    //===================================== Helper Methods ============================================
 
     // Returns current file listing at designated path
     public String[] getFiles(Path directory) {
