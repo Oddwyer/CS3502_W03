@@ -150,7 +150,7 @@ public class LocalFileManager implements FileManager {
                     message = "File or directory not found.";
                     // Check if a file...
                 } else if (Files.exists(newPath)) {
-                    message = "An file or directory with that name already exists.";
+                    message = "A file or directory with that name already exists.";
                 } else {
                     // Attempt to rename file by moving path
                     Files.move(oldPath, newPath);
