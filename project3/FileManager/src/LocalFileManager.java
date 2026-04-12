@@ -144,15 +144,16 @@ public class LocalFileManager implements FileManager {
             }
             // Check if a directory and whether directory contains files
             else if (Files.isDirectory(selected)) {
-                try (var files = Files.list(selected)){
-                if(files.findAny().isPresent()){
-                    message = "Cannot delete a non-empty directory.";
-                } else {
-                    Files.delete(selected);
-                    message = "Deleted directory: " + selected.getFileName();
-                    success = true;
+                try (var files = Files.list(selected)) {
+                    if (files.findAny().isPresent()) {
+                        message = "Cannot delete a non-empty directory.";
+                    } else {
+                        Files.delete(selected);
+                        message = "Deleted directory: " + selected.getFileName();
+                        success = true;
+                    }
                 }
-            } } // If not a directory, delete the file
+            } // If not a directory, delete the file
             else {
                 Files.delete(selected);
                 message = "Deleted file: " + selected.getFileName();
@@ -160,7 +161,7 @@ public class LocalFileManager implements FileManager {
             }
 
             // Handles both tries above: directory existence, directory containment
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             message = "Could not delete item.";
         }
         // Return packaged result details
@@ -201,14 +202,13 @@ public class LocalFileManager implements FileManager {
 
     //===================================== Helper Methods ============================================
 
-    // Returns current file listing at designated path
+    // Returns current files list at designated path
     public String[] getFiles(Path directory) {
-        // Create a pointer to the directory
-        File folder = directory.toFile();
-        // List the files at the directory
-        String[] files = folder.list();
-        // If files is not null, return, return empty array
-        return files != null ? files : new String[0];
+        // Convert all paths at the directory to strings and save to array for display
+        try (var stream = Files.list(directory)) {
+            return stream.map(path -> path.getFileName().toString()).toArray(String[]::new);
+        } catch (IOException ex) {
+            return new String[0];
+        }
     }
-
 }

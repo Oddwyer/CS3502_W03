@@ -41,7 +41,7 @@ public class FileMakerWindow extends JFrame {
         this.fileManager = fileManager;
         // Invoke fileManager for a path string and convert to a Path.
         currentPath = Paths.get(fileManager.getCurrentPath());
-        pathLabel = new JLabel("Path:" + currentPath.toString());
+        pathLabel = new JLabel("Path: " + currentPath.toString());
         fileList = new JList<>(fileManager.getFiles(currentPath));
 
         // Window properties + layout
