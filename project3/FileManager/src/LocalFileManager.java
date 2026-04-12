@@ -133,7 +133,7 @@ public class LocalFileManager implements FileManager {
         return new OperationResult(success, message, content);
     }
 
-    /* Updates file and returns whether successful along with feedback message*/
+    /* Renames file or directory and returns whether successful along with feedback message*/
     public OperationResult renameItem(Path oldPath, Path newPath) {
         boolean success = false;
         String message = "";
