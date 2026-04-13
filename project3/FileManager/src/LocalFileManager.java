@@ -42,7 +42,7 @@ public class LocalFileManager implements FileManager {
                 message = "File already exists.";
             } else {
                 Files.createFile(newFile);
-                message = "File created: " + fileName;
+                message = "Created: " + fileName;
                 success = true;
             }
         } catch (IOException ex) {
@@ -70,7 +70,7 @@ public class LocalFileManager implements FileManager {
                 message = "Directory folder already exists.";
             } else {
                 Files.createDirectory(newDirectory);
-                message = "Directory created: " + folderName;
+                message = "Created: " + folderName;
                 success = true;
             }
         } catch (IOException ex) {
@@ -149,14 +149,14 @@ public class LocalFileManager implements FileManager {
                         message = "Cannot delete a non-empty directory.";
                     } else {
                         Files.delete(selected);
-                        message = "Deleted directory: " + selected.getFileName();
+                        message = "Deleted: " + selected.getFileName();
                         success = true;
                     }
                 }
             } // If not a directory, delete the file
             else {
                 Files.delete(selected);
-                message = "Deleted file: " + selected.getFileName();
+                message = "Deleted: " + selected.getFileName();
                 success = true;
             }
 

@@ -102,26 +102,27 @@ public class FileMakerWindow extends JFrame {
 
         // Row 1: Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+
+        buttonPanel.add(openButton);
+        openItem();
+
+        buttonPanel.add(upButton);
+        navigateUp();
+
         buttonPanel.add(createFileButton);
         createFile();
 
         buttonPanel.add(createDirectoryButton);
         createDirectory();
 
-        buttonPanel.add(openButton);
-        openItem();
-
         buttonPanel.add(updateButton);
         updateFile();
-
-        buttonPanel.add(deleteButton);
-        deleteItem();
 
         buttonPanel.add(renameButton);
         renameItem();
 
-        buttonPanel.add(upButton);
-        navigateUp();
+        buttonPanel.add(deleteButton);
+        deleteItem();
 
         // Row 2: Status label
         JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -261,7 +262,7 @@ public class FileMakerWindow extends JFrame {
             // Error handling: if valid selection, request new name for file
             if (selected != null) {
                 // Save requested file name from pop-up input box
-                String fileName = javax.swing.JOptionPane.showInputDialog("Enter new file name:");
+                String fileName = javax.swing.JOptionPane.showInputDialog("Enter new file or directory name:");
                 // If file name provided, identify file path and rename file
                 if (fileName != null && !fileName.isEmpty()) {
                     // Save selected path
@@ -275,7 +276,7 @@ public class FileMakerWindow extends JFrame {
                         label.setText(result.getMessage());
                     }
                 } else {
-                    label.setText("No file name entered.");
+                    label.setText("No name entered.");
                 }
             } else {
                 label.setText("No item selected.");
