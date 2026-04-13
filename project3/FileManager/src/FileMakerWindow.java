@@ -43,6 +43,7 @@ public class FileMakerWindow extends JFrame {
         currentPath = Paths.get(fileManager.getCurrentPath());
         pathLabel = new JLabel("Path: " + currentPath.toString());
         fileList = new JList<>(fileManager.getFiles(currentPath));
+        displayMetadata();
 
         // Window properties + layout
         textArea = new JTextArea(10, 30);
@@ -138,6 +139,28 @@ public class FileMakerWindow extends JFrame {
     // Refreshes directory to show new files or removal of deleted files
     private void refreshDirectory() {
         fileList.setListData(fileManager.getFiles(currentPath));
+    }
+
+    // Displays metadata when file / directory is selected in list
+    private void displayMetadata() {
+        fileList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                String selected = fileList.getSelectedValue();
+
+                if (selected != null) {
+                    Path selectedPath = currentPath.resolve(selected);
+
+                    result = fileManager.getMetadata(selectedPath);
+
+                    if (result.isSuccess()) {
+                        textArea.setText(result.getContent());
+                        label.setText(result.getMessage());
+                    } else {
+                        label.setText(result.getMessage());
+                    }
+                }
+            }
+        });
     }
 
     //================== CRUD Button Actions ========================
@@ -297,7 +320,19 @@ public class FileMakerWindow extends JFrame {
             if (selected != null) {
                 // Save selected path
                 Path selectedPath = currentPath.resolve(selected);
-                // Save operation result from invoking deleteFile and display accordingly
+                // Confirmation dialog to proceed with deletion
+                int confirm = JOptionPane.showConfirmDialog(
+                        null,
+                        "Are you sure you want to delete: " + selected + "?",
+                        "Confirm Delete",
+                        JOptionPane.YES_NO_OPTION
+                );
+                if (confirm != JOptionPane.YES_OPTION) {
+                    label.setText("Delete cancelled.");
+                    return;
+                }
+
+                // If proceeding, save operation result from invoking deleteFile and display accordingly
                 result = fileManager.deleteItem(selectedPath);
                 if (result.isSuccess()) {
                     label.setText(result.getMessage());

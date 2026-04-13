@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
 // Implements FileManager and handles all file logic. Keeps file (domain) logic separate from GUI logic for
@@ -187,8 +188,8 @@ public class LocalFileManager implements FileManager {
                 } else if (Files.exists(newPath)) {
                     message = "A file or directory with that name already exists.";
                 } else {
-                    // Attempt to rename file by moving path
-                    Files.move(oldPath, newPath);
+                    // Attempt to rename file by moving path; must be done atomically
+                    Files.move(oldPath, newPath, StandardCopyOption.ATOMIC_MOVE);
                     message = "Renamed: " + oldPath.getFileName() + " to " + newPath.getFileName();
                     success = true;
                 }
@@ -199,6 +200,42 @@ public class LocalFileManager implements FileManager {
         // Return packaged result details
         return new OperationResult(success, message, content);
     }
+
+    /* Renames file or directory and returns whether successful along with feedback message*/
+    public OperationResult getMetadata(Path selected) {
+        boolean success = false;
+        String message = "";
+        String content = "";
+
+        // Error handling
+        if (selected != null) {
+            // Create a file pointer to the selected path
+            // If the file exists, try to update
+            try {
+                // Error handling
+                // Check if file exists...
+                if (!Files.exists(selected)) {
+                    message = "File or directory not found.";
+                    // Check if a file...
+                } else  {
+                    content += "Size: " + Files.size(selected) + " bytes\n";
+                    content += "Owner: " + Files.getOwner(selected) + "\n";
+                    content += "Last Modified: " + Files.getLastModifiedTime(selected) + "\n";
+                    content += "Readable: " + Files.isReadable(selected) + "\n";
+                    content += "Writable: " + Files.isWritable(selected) + "\n";
+                    content += "Type: " + (Files.isDirectory(selected) ? "Directory" : "File");
+
+                    message = "Metadata loaded.";
+                    success = true;
+                }
+            } catch (IOException ex) {
+                message = "Could not retrieve metadata.";
+            }
+        }
+        // Return packaged result details
+        return new OperationResult(success, message, content);
+    }
+
 
     //===================================== Helper Methods ============================================
 

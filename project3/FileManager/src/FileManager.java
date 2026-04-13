@@ -17,4 +17,5 @@ public interface FileManager {
     public OperationResult deleteItem(Path selected);
     public OperationResult updateFile(Path selected, String newContent);
     public OperationResult renameItem(Path selected, Path newPath);
+    public OperationResult getMetadata(Path selected);
 }
