@@ -26,7 +26,7 @@ public class LocalFileManager implements FileManager {
 
     //============================================== CRUD Logic ============================================
 
-    /*Creates file at given location with given name and returns whether  file creation was successful
+    /* Creates file at given location with given name and returns whether  file creation was successful
     along with feedback message*/
     public OperationResult createFile(Path directory, String fileName) {
         boolean success = false;
@@ -53,7 +53,7 @@ public class LocalFileManager implements FileManager {
         return new OperationResult(success, message, content);
     }
 
-    /*Creates directory folder at given location with given name and returns whether directory creation was successful
+    /* Creates directory folder at given location with given name and returns whether directory creation was successful
     along with feedback message*/
     public OperationResult createDirectory(Path directory, String folderName) {
         boolean success = false;
@@ -201,7 +201,7 @@ public class LocalFileManager implements FileManager {
         return new OperationResult(success, message, content);
     }
 
-    /* Renames file or directory and returns whether successful along with feedback message*/
+    /* If file or directory exists, displays metadata*/
     public OperationResult getMetadata(Path selected) {
         boolean success = false;
         String message = "";
