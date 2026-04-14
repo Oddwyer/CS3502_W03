@@ -118,7 +118,7 @@ public class LocalFileManager implements FileManager {
             try {
                 // Save content by reading entire file available at the selected path
                 content = Files.readString(selected);
-                return new OperationResult(true, "Opened: " + selected.getFileName(), content);
+                return new OperationResult(true, "Opened file: " + selected.getFileName(), content);
             } // If ENOENT
             catch (NoSuchFileException ex) {
                 return new OperationResult(false, "File not found.", content);
@@ -235,7 +235,7 @@ public class LocalFileManager implements FileManager {
                     }
                 }
                 return new OperationResult(false, "File system error: " + details, content);
-               
+
             } // If other error
             catch (IOException ex) {
                 return new OperationResult(false, "Could not rename item: " + ex.getMessage(), content);
