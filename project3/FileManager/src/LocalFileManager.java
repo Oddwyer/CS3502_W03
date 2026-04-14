@@ -4,8 +4,6 @@
 
 // File logic imports
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.*;
 
@@ -31,7 +29,6 @@ public class LocalFileManager implements FileManager {
         String message;
         String content = "";
 
-        // Error handling
         try {
             // Create a path to: current path / fileName
             Path newFile = directory.resolve(fileName);
@@ -66,7 +63,6 @@ public class LocalFileManager implements FileManager {
         String message;
         String content = "";
 
-        // Error handling
         try {
             // Create a path pointer to: current path / directory
             Path newDirectory = directory.resolve(folderName);
@@ -98,25 +94,29 @@ public class LocalFileManager implements FileManager {
         String message;
         String content = "";
 
-        // Error handling
-        try {
-            // Save content by reading entire file available at the selected path
-            content = Files.readString(selected);
-            message = "Opened: " + selected.getFileName();
-            success = true;
-        } // If ENOENT
-        catch (NoSuchFileException ex) {
-            message = "File not found.";
-        } // If EACCES
-        catch (AccessDeniedException ex) {
-            message = "Permission denied.";
-        } // If other error
-        catch (IOException ex) {
-            message = "Error reading file: " + ex.getMessage();
-        }
+        // If selected path is null, return error
+        if (selected == null) {
+            return new OperationResult(false, "No file selected.", "");
+        } else {
+            try {
+                // Save content by reading entire file available at the selected path
+                content = Files.readString(selected);
+                message = "Opened: " + selected.getFileName();
+                success = true;
+            } // If ENOENT
+            catch (NoSuchFileException ex) {
+                message = "File not found.";
+            } // If EACCES
+            catch (AccessDeniedException ex) {
+                message = "Permission denied.";
+            } // If other error
+            catch (IOException ex) {
+                message = "Error reading file: " + ex.getMessage();
+            }
 
-        // Return packaged result details
-        return new OperationResult(success, message, content);
+            // Return packaged result details
+            return new OperationResult(success, message, content);
+        }
     }
 
     /* Updates file contents and returns whether successful along with feedback message*/
@@ -125,38 +125,41 @@ public class LocalFileManager implements FileManager {
         String message;
         String content = "";
 
-        // Error handling
-        try {
-            // Check if file exists (If ENOENT) FIRST: Due to directory vs file distinction,
-            // we cannot simply check if the selected path exists.
-            if (!Files.exists(selected)) {
-                message = "File not found.";
-            } // Check if file is a directory
-            else if (Files.isDirectory(selected)) {
-                message = "Cannot update a directory.";
-                // Check if file is writable
-            } else if (!Files.isWritable(selected)) {
-                message = "File is read-only or not writable.";
-            } else {
-                // Attempt to update file: erase old content and replace with revised/new content
-                Files.writeString(selected, newContent, StandardOpenOption.TRUNCATE_EXISTING);
-                message = "Updated: " + selected.getFileName();
-                success = true;
+        // If selected path is null, return error
+        if (selected == null) {
+            return new OperationResult(false, "No file selected.", "");
+        } else {
+            try {
+                // Check existence first so missing files are not misreported as non-writable.
+                if (!Files.exists(selected)) {
+                    message = "File not found.";
+                } // Check if file is a directory
+                else if (Files.isDirectory(selected)) {
+                    message = "Cannot update a directory.";
+                    // Check if file is writable
+                } else if (!Files.isWritable(selected)) {
+                    message = "File is read-only or not writable.";
+                } else {
+                    // Attempt to update file: erase old content and replace with revised/new content
+                    Files.writeString(selected, newContent, StandardOpenOption.TRUNCATE_EXISTING);
+                    message = "Updated: " + selected.getFileName();
+                    success = true;
+                }
+            }  // If EACCES
+            catch (AccessDeniedException ex) {
+                message = "Permission denied.";
+            } // If EBUSY
+            catch (FileSystemException ex) {
+                message = "File may be in use by another process.";
             }
-        }  // If EACCES
-        catch (AccessDeniedException ex) {
-            message = "Permission denied.";
-        } // If EBUSY
-        catch (FileSystemException ex) {
-            message = "File(s) may be in use by another user or process.";
-        }
-        // If other error
-        catch (IOException ex) {
-            message = "Could not update file: " + ex.getMessage();
-        }
+            // If other error
+            catch (IOException ex) {
+                message = "Could not update file: " + ex.getMessage();
+            }
 
-        // Return packaged result details
-        return new OperationResult(success, message, content);
+            // Return packaged result details
+            return new OperationResult(success, message, content);
+        }
     }
 
     /* Deletes file or directory (if not empty) and returns whether successful along with feedback message*/
@@ -165,31 +168,35 @@ public class LocalFileManager implements FileManager {
         String message;
         String content = "";
 
-        // Error handling
-        try {
-            Files.delete(selected);
-            message = "Deleted: " + selected.getFileName();
-            success = true;
-        } // If ENOENT
-        catch (NoSuchFileException ex) {
-            message = "File or directory not found.";
-        } // If ENOTEMPTY
-        catch (DirectoryNotEmptyException ex) {
-            message = "Cannot delete a non-empty directory.";
-        } // If EACCES
-        catch (AccessDeniedException ex) {
-            message = "Permission denied.";
-        } // If EBUSY
-        catch (FileSystemException ex) {
-            message = "Item may be in use by another user or process.";
-        }
-        // If other error
-        catch (IOException ex) {
-            message = "Could not delete item: " + ex.getMessage();
-        }
+        if (selected == null) {
+            return new OperationResult(false, "No item selected.", "");
+        } else {
+            try {
+                // If file or directory exists, delete it
+                Files.delete(selected);
+                message = "Deleted: " + selected.getFileName();
+                success = true;
+            } // If ENOENT
+            catch (NoSuchFileException ex) {
+                message = "File or directory not found.";
+            } // If ENOTEMPTY
+            catch (DirectoryNotEmptyException ex) {
+                message = "Cannot delete a non-empty directory.";
+            } // If EACCES
+            catch (AccessDeniedException ex) {
+                message = "Permission denied.";
+            } // If EBUSY
+            catch (FileSystemException ex) {
+                message = "Item may be in use by another process.";
+            }
+            // If other error
+            catch (IOException ex) {
+                message = "Could not delete item: " + ex.getMessage();
+            }
 
-        // Return packaged result details
-        return new OperationResult(success, message, content);
+            // Return packaged result details
+            return new OperationResult(success, message, content);
+        }
     }
 
     /* Renames file or directory and returns whether successful along with feedback message*/
@@ -198,11 +205,10 @@ public class LocalFileManager implements FileManager {
         String message = "";
         String content = "";
 
-        // Error handling
-        if (oldPath != null) {
-            // Create a file pointer to the selected path
-
-            // Error handling
+        // If old or new path is null, return error
+        if (oldPath == null || newPath == null) {
+            return new OperationResult(false, "No item selected.", "");
+        } else {
             try {
                 // Attempt to rename file by moving path; must be done atomically
                 Files.move(oldPath, newPath, StandardCopyOption.ATOMIC_MOVE);
@@ -219,7 +225,7 @@ public class LocalFileManager implements FileManager {
                 message = "Permission denied.";
             } // If EBUSY
             catch (FileSystemException ex) {
-                message = "Item may be in use by another user or process.";
+                message = "Item may be in use by another process.";
             } // If other error
             catch (IOException ex) {
                 message = "Could not rename item: " + ex.getMessage();
@@ -236,9 +242,10 @@ public class LocalFileManager implements FileManager {
         String message = "";
         String content = "";
 
-        // Error handling
-        if (selected != null) {
-
+        // If selected path is null, return error
+        if (selected == null) {
+            return new OperationResult(false, "No item selected.", "");
+        } else {
             // Error handling
             try {
                 // Check existence first to avoid multiple exceptions from metadata calls

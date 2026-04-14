@@ -147,7 +147,10 @@ public class FileMakerWindow extends JFrame {
             if (!e.getValueIsAdjusting()) {
                 String selected = fileList.getSelectedValue();
 
-                if (selected != null) {
+                // If selected path is null, return error
+                if (selected == null) {
+                    label.setText("No file selected.");
+                } else {
                     Path selectedPath = currentPath.resolve(selected);
 
                     result = fileManager.getMetadata(selectedPath);
@@ -221,7 +224,9 @@ public class FileMakerWindow extends JFrame {
             textArea.setText("");
 
             // Error handling: if valid selection, read file
-            if (selected != null) {
+            if (selected == null) {
+                label.setText("No file selected.");
+            } else {
                 // Save selected path
                 Path selectedPath = currentPath.resolve(selected);
 
@@ -244,8 +249,6 @@ public class FileMakerWindow extends JFrame {
                 } else {
                     label.setText(result.getMessage());
                 }
-            } else {
-                label.setText("No file selected.");
             }
         });
     }
@@ -257,7 +260,9 @@ public class FileMakerWindow extends JFrame {
             String selected = fileList.getSelectedValue();
 
             // Error handling: if valid selection, update file
-            if (selected != null) {
+            if (selected == null) {
+                label.setText("No file selected.");
+            } else{
                 // Save selected path
                 Path selectedPath = currentPath.resolve(selected);
                 // Save newly entered content in text box
@@ -270,8 +275,6 @@ public class FileMakerWindow extends JFrame {
                 } else {
                     label.setText(result.getMessage());
                 }
-            } else {
-                label.setText("No file selected.");
             }
         });
     }
@@ -283,7 +286,9 @@ public class FileMakerWindow extends JFrame {
             String selected = fileList.getSelectedValue();
 
             // Error handling: if valid selection, request new name for file
-            if (selected != null) {
+            if (selected == null) {
+                label.setText("No item selected.");
+            } else{
                 // Save requested file name from pop-up input box
                 String fileName = javax.swing.JOptionPane.showInputDialog("Enter new file or directory name:");
                 // If file name provided, identify file path and rename file
@@ -301,8 +306,6 @@ public class FileMakerWindow extends JFrame {
                 } else {
                     label.setText("No name entered.");
                 }
-            } else {
-                label.setText("No item selected.");
             }
         });
     }
@@ -317,7 +320,9 @@ public class FileMakerWindow extends JFrame {
             textArea.setText("");
 
             // Read file
-            if (selected != null) {
+            if (selected == null) {
+                label.setText("No item selected.");
+            } else{
                 // Save selected path
                 Path selectedPath = currentPath.resolve(selected);
                 // Confirmation dialog to proceed with deletion
@@ -341,8 +346,6 @@ public class FileMakerWindow extends JFrame {
                 } else {
                     label.setText(result.getMessage());
                 }
-            } else {
-                label.setText("No item selected.");
             }
         });
     }
