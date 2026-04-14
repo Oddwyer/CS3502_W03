@@ -2,6 +2,8 @@
 // File logic imports
 import java.nio.file.Path;
 
+/* Interface to further abstract file logic away from GUI logic reducing coupling. */
+
 public interface FileManager {
 
     // Display current working directory path

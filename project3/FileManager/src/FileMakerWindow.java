@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 // Extends JFrame and instantiates GUI frame and layouts for file directory window. Keeps GUI logic
+
 // separate from file (domain) logic for clear separation of concerns.
 public class FileMakerWindow extends JFrame {
 
@@ -148,12 +149,15 @@ public class FileMakerWindow extends JFrame {
             if (!e.getValueIsAdjusting()) {
                 String selected = fileList.getSelectedValue();
 
-                // If selected path is null, return error
-                if (selected == null) {
-                    label.setText("No file selected.");
-                } else {
+                // If selected path or current path is null, return error
+                if (selected == null || currentPath == null) {
+                    label.setText("No item selected.");
+                } // Do not replace file contents while editing an opened file
+                else if (currentFile != null) {
+                    label.setText("Cannot display metadata while editing a file. Save changes first.");
+                } // If not editing an opened file, display metadata
+                else {
                     Path selectedPath = currentPath.resolve(selected);
-
                     result = fileManager.getMetadata(selectedPath);
 
                     if (result.isSuccess()) {
@@ -224,7 +228,7 @@ public class FileMakerWindow extends JFrame {
 
             // If valid selection, open item
             if (selected == null) {
-                label.setText("No file selected.");
+                label.setText("No item selected.");
             } else {
                 // Save selected path
                 Path selectedPath = currentPath.resolve(selected);
@@ -268,15 +272,15 @@ public class FileMakerWindow extends JFrame {
             // If file is open, permit file updates
             if (currentFile == null) {
                 label.setText("No file open.");
-            } else{
+            } else {
 
                 String newContent = textArea.getText();
                 // Save operation result from invoking updateFile and display accordingly
                 result = fileManager.updateFile(currentFile, newContent);
                 if (result.isSuccess()) {
-                    label.setText(result.getMessage());
                     refreshDirectory();
                     updateButton.setText("Update File"); // Reset button text
+                    label.setText(result.getMessage());
                     currentFile = null; // Reset current file
                     textArea.setEditable(false); // Disable text editing
                 } else {
@@ -295,7 +299,7 @@ public class FileMakerWindow extends JFrame {
             // If valid selection, request new name for item
             if (selected == null) {
                 label.setText("No item selected.");
-            } else{
+            } else {
                 // Save requested file name from pop-up input box
                 String fileName = javax.swing.JOptionPane.showInputDialog("Enter new file or directory name:");
                 // If file name provided, identify file path and rename file
@@ -329,7 +333,7 @@ public class FileMakerWindow extends JFrame {
             // If valid selection, delete item
             if (selected == null) {
                 label.setText("No item selected.");
-            } else{
+            } else {
                 // Save selected path
                 Path selectedPath = currentPath.resolve(selected);
                 // Confirmation dialog to proceed with deletion
