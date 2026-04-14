@@ -31,6 +31,9 @@ public class LocalFileManager implements FileManager {
         if (directory == null || fileName == null || fileName.isBlank()) {
             return new OperationResult(false, "File name is missing.", content);
         }
+        if (!Files.isDirectory(directory)) {
+            return new OperationResult(false, "Directory path is not valid.", content);
+        }
         try {
             // Create a path to: current path / fileName
             Path newFile = directory.resolve(fileName);
@@ -73,6 +76,9 @@ public class LocalFileManager implements FileManager {
         if (directory == null || folderName == null || folderName.isBlank()) {
             return new OperationResult(false, "Directory name is missing.", content);
         }
+        if (!Files.isDirectory(directory)) {
+            return new OperationResult(false, "Directory path is not valid.", content);
+        }
         try {
             // Create a path pointer to: current path / directory
             Path newDirectory = directory.resolve(folderName);
@@ -114,7 +120,11 @@ public class LocalFileManager implements FileManager {
         // If selected path is null, return error
         if (selected == null) {
             return new OperationResult(false, "No file selected.", content);
-        } else {
+        } // If selected path is a directory, return error
+        else if (Files.isDirectory(selected)) {
+            return new OperationResult(false, "Cannot read a directory.", content);
+        } // If selected path is a file, read file content
+        else {
             try {
                 // Save content by reading entire file available at the selected path
                 content = Files.readString(selected);
@@ -125,6 +135,9 @@ public class LocalFileManager implements FileManager {
             } // If EACCES
             catch (AccessDeniedException ex) {
                 return new OperationResult(false, "Permission denied.", content);
+            }// If EBUSY or invalid (too long, illegal characters)
+            catch (FileSystemException ex) {
+                return new OperationResult(false, "File system error: " + ex.getMessage(), content);
             } // If other error
             catch (IOException ex) {
                 return new OperationResult(false, "Error reading file: " + ex.getMessage(), content);
@@ -158,9 +171,9 @@ public class LocalFileManager implements FileManager {
             }  // If EACCES
             catch (AccessDeniedException ex) {
                 return new OperationResult(false, "Permission denied.", content);
-            } // If EBUSY
+            } // If EBUSY or invalid (too long, illegal characters)
             catch (FileSystemException ex) {
-                return new OperationResult(false, "File may be in use by another process.", content);
+                return new OperationResult(false, "File system error: " + ex.getMessage(), content);
             } // If other error
             catch (IOException ex) {
                 return new OperationResult(false, "Could not update file: " + ex.getMessage(), content);
@@ -188,7 +201,7 @@ public class LocalFileManager implements FileManager {
             } // If EACCES
             catch (AccessDeniedException ex) {
                 return new OperationResult(false, "Permission denied.", content);
-            } // If EBUSY
+            } // If EBUSY or invalid (too long, illegal characters)
             catch (FileSystemException ex) {
                 return new OperationResult(false, "File system error: " + ex.getMessage(), content);
             }
@@ -267,7 +280,7 @@ public class LocalFileManager implements FileManager {
                     content += "Writable: " + Files.isWritable(selected) + "\n";
                     content += "Type: " + (Files.isDirectory(selected) ? "Directory" : "File");
 
-                    return new OperationResult(false, "Metadata loaded.", content);
+                    return new OperationResult(true, "Metadata loaded.", content);
                 }
             } catch (IOException ex) {
                 return new OperationResult(false, "Could not retrieve metadata: " + ex.getMessage(), content);
