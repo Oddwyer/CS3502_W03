@@ -5,11 +5,9 @@
 // File logic imports
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 
 // Implements FileManager and handles all file logic. Keeps file (domain) logic separate from GUI logic for
 // clear separation of concerns.
@@ -37,18 +35,26 @@ public class LocalFileManager implements FileManager {
         try {
             // Create a path to: current path / fileName
             Path newFile = directory.resolve(fileName);
-
-            // Create file if it does not already exist; if it does return notice
-            if (Files.exists(newFile)) {
-                message = "File already exists.";
-            } else {
-                Files.createFile(newFile);
-                message = "Created: " + fileName;
-                success = true;
-            }
-        } catch (IOException ex) {
-            message = "Error creating file.";
+            Files.createFile(newFile);
+            message = "Created: " + fileName;
+            success = true;
+        } // If EEXIST
+        catch (FileAlreadyExistsException ex) {
+            message = "File already exists.";
+        } // If EACCES
+        catch (AccessDeniedException ex) {
+            message = "Permission denied.";
+        } // If path too long or illegal characters
+        catch (InvalidPathException ex) {
+            message = "File path is too long or contains illegal characters.";
+        } // If EBUSY
+        catch (FileSystemException ex) {
+            message = "File(s) are in use by another user or process.";
+        } // If EIO, ENOSPC, or other error
+        catch (IOException ex) {
+            message = "Error creating file: " + ex.getMessage();
         }
+
         // Return packaged result details
         return new OperationResult(success, message, content);
     }
@@ -64,19 +70,23 @@ public class LocalFileManager implements FileManager {
         try {
             // Create a path pointer to: current path / directory
             Path newDirectory = directory.resolve(folderName);
-
-            // Create directory if it does not already exist; if it does return notice
-
-            if (Files.exists(newDirectory)) {
-                message = "Directory folder already exists.";
-            } else {
-                Files.createDirectory(newDirectory);
-                message = "Created: " + folderName;
-                success = true;
-            }
-        } catch (IOException ex) {
-            message = "Error creating directory.";
+            Files.createDirectory(newDirectory);
+            message = "Created: " + folderName;
+            success = true;
+        } // If EEXIST
+        catch (FileAlreadyExistsException ex) {
+            message = "Directory already exists.";
+            // If EACCES
+        } catch (AccessDeniedException ex) {
+            message = "Permission denied.";
+        } // If path too long or illegal characters
+        catch (InvalidPathException ex) {
+            message = "Directory path is too long or contains illegal characters.";
+        } // If EIO, ENOSPC, or other error
+        catch (IOException ex) {
+            message = "Error creating directory: " + ex.getMessage();
         }
+
         // Return packaged result details
         return new OperationResult(success, message, content);
     }
@@ -94,26 +104,35 @@ public class LocalFileManager implements FileManager {
             content = Files.readString(selected);
             message = "Opened: " + selected.getFileName();
             success = true;
-        } catch (Exception ex) {
-            message = "Error reading file.";
+        } // If ENOENT
+        catch (NoSuchFileException ex) {
+            message = "File not found.";
+        } // If EACCES
+        catch (AccessDeniedException ex) {
+            message = "Permission denied.";
+        } // If other error
+        catch (IOException ex) {
+            message = "Error reading file: " + ex.getMessage();
         }
+
         // Return packaged result details
         return new OperationResult(success, message, content);
     }
 
-    /* Updates file and returns whether successful along with feedback message*/
+    /* Updates file contents and returns whether successful along with feedback message*/
     public OperationResult updateFile(Path selected, String newContent) {
         boolean success = false;
         String message;
         String content = "";
 
-        // If the file exists, try to update
+        // Error handling
         try {
-            // Error handling: check if file exists
+            // Check if file exists (If ENOENT) FIRST: Due to directory vs file distinction,
+            // we cannot simply check if the selected path exists.
             if (!Files.exists(selected)) {
                 message = "File not found.";
-                // Check if a file and not a directory
-            } else if (Files.isDirectory(selected)) {
+            } // Check if file is a directory
+            else if (Files.isDirectory(selected)) {
                 message = "Cannot update a directory.";
                 // Check if file is writable
             } else if (!Files.isWritable(selected)) {
@@ -124,9 +143,18 @@ public class LocalFileManager implements FileManager {
                 message = "Updated: " + selected.getFileName();
                 success = true;
             }
-        } catch (IOException ex) {
-            message = "Could not update file.";
+        }  // If EACCES
+        catch (AccessDeniedException ex) {
+            message = "Permission denied.";
+        } // If EBUSY
+        catch (FileSystemException ex) {
+            message = "File(s) may be in use by another user or process.";
         }
+        // If other error
+        catch (IOException ex) {
+            message = "Could not update file: " + ex.getMessage();
+        }
+
         // Return packaged result details
         return new OperationResult(success, message, content);
     }
@@ -137,34 +165,29 @@ public class LocalFileManager implements FileManager {
         String message;
         String content = "";
 
-        // If the file exists, try to delete
+        // Error handling
         try {
-            // Error handling: check if file/directory exists
-            if (!Files.exists(selected)) {
-                message = "File or directory not found.";
-            }
-            // Check if a directory and whether directory contains files
-            else if (Files.isDirectory(selected)) {
-                try (var files = Files.list(selected)) {
-                    if (files.findAny().isPresent()) {
-                        message = "Cannot delete a non-empty directory.";
-                    } else {
-                        Files.delete(selected);
-                        message = "Deleted: " + selected.getFileName();
-                        success = true;
-                    }
-                }
-            } // If not a directory, delete the file
-            else {
-                Files.delete(selected);
-                message = "Deleted: " + selected.getFileName();
-                success = true;
-            }
-
-            // Handles both tries above: directory existence, directory containment
-        } catch (IOException ex) {
-            message = "Could not delete item.";
+            Files.delete(selected);
+            message = "Deleted: " + selected.getFileName();
+            success = true;
+        } // If ENOENT
+        catch (NoSuchFileException ex) {
+            message = "File or directory not found.";
+        } // If ENOTEMPTY
+        catch (DirectoryNotEmptyException ex) {
+            message = "Cannot delete a non-empty directory.";
+        } // If EACCES
+        catch (AccessDeniedException ex) {
+            message = "Permission denied.";
+        } // If EBUSY
+        catch (FileSystemException ex) {
+            message = "Item may be in use by another user or process.";
         }
+        // If other error
+        catch (IOException ex) {
+            message = "Could not delete item: " + ex.getMessage();
+        }
+
         // Return packaged result details
         return new OperationResult(success, message, content);
     }
@@ -178,25 +201,31 @@ public class LocalFileManager implements FileManager {
         // Error handling
         if (oldPath != null) {
             // Create a file pointer to the selected path
-            // If the file exists, try to update
+
+            // Error handling
             try {
-                // Error handling
-                // Check if file exists...
-                if (!Files.exists(oldPath)) {
-                    message = "File or directory not found.";
-                    // Check if a file...
-                } else if (Files.exists(newPath)) {
-                    message = "A file or directory with that name already exists.";
-                } else {
-                    // Attempt to rename file by moving path; must be done atomically
-                    Files.move(oldPath, newPath, StandardCopyOption.ATOMIC_MOVE);
-                    message = "Renamed: " + oldPath.getFileName() + " to " + newPath.getFileName();
-                    success = true;
-                }
-            } catch (IOException ex) {
-                message = "Could not rename item.";
+                // Attempt to rename file by moving path; must be done atomically
+                Files.move(oldPath, newPath, StandardCopyOption.ATOMIC_MOVE);
+                message = "Renamed: " + oldPath.getFileName() + " to " + newPath.getFileName();
+                success = true;
+            } // If ENOENT
+            catch (NoSuchFileException ex) {
+                message = "File or directory not found.";
+            } // If EEXIST
+            catch (FileAlreadyExistsException ex) {
+                message = "File or directory already exists.";
+            } // If EACCES
+            catch (AccessDeniedException ex) {
+                message = "Permission denied.";
+            } // If EBUSY
+            catch (FileSystemException ex) {
+                message = "Item may be in use by another user or process.";
+            } // If other error
+            catch (IOException ex) {
+                message = "Could not rename item: " + ex.getMessage();
             }
         }
+
         // Return packaged result details
         return new OperationResult(success, message, content);
     }
@@ -209,16 +238,17 @@ public class LocalFileManager implements FileManager {
 
         // Error handling
         if (selected != null) {
-            // Create a file pointer to the selected path
-            // If the file exists, try to update
+
+            // Error handling
             try {
-                // Error handling
-                // Check if file exists...
+                // Check existence first to avoid multiple exceptions from metadata calls
                 if (!Files.exists(selected)) {
                     message = "File or directory not found.";
-                    // Check if a file...
-                } else  {
-                    content += "Size: " + Files.size(selected) + " bytes\n";
+                    // Check if a file or directory and provide metadata accordingly
+                } else {
+                    if (!Files.isDirectory(selected)) {
+                        content += "Size: " + Files.size(selected) + " bytes\n";
+                    }
                     content += "Owner: " + Files.getOwner(selected) + "\n";
                     content += "Last Modified: " + Files.getLastModifiedTime(selected) + "\n";
                     content += "Readable: " + Files.isReadable(selected) + "\n";
@@ -229,13 +259,12 @@ public class LocalFileManager implements FileManager {
                     success = true;
                 }
             } catch (IOException ex) {
-                message = "Could not retrieve metadata.";
+                message = "Could not retrieve metadata: " + ex.getMessage();
             }
         }
         // Return packaged result details
         return new OperationResult(success, message, content);
     }
-
 
     //===================================== Helper Methods ============================================
 
