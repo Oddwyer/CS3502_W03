@@ -35,6 +35,8 @@ public class FileMakerWindow extends JFrame {
     // File properties
     private Path currentPath; // Location in file system
     private Path currentFile; // Currently opened (active) file
+    private Path clipboardPath;
+    private boolean isCutOperation = false;
     private boolean isEditing = false;
     private JList<String> fileList;
     private FileManager fileManager;
@@ -516,6 +518,24 @@ public class FileMakerWindow extends JFrame {
             }
         });
     }
+
+    // TODO: Implement copyAction method
+    /*private void copyAction(){
+
+        // If no file is selected, return error
+        if (currentFile == null) {
+            setStatus("No file selected to copy.");
+            return;
+        } // Do not allow copying while editing another file
+        if (isEditing) {
+            setStatus("Finish editing before copying.");
+            return;
+        } // If file is selected, copy it to clipboard
+
+            clipboardPath = currentFile.toPath();
+            isCutOperation = false;
+
+            setStatus("Copied: " + clipboardPath.getFileName());*/
 }
 
 
