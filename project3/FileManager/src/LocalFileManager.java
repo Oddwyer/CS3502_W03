@@ -292,7 +292,7 @@ public class LocalFileManager implements FileManager {
 
     // Returns current files list at designated path
     public String[] getFiles(Path directory) {
-        // Convert all paths at the directory to strings and save to array for display
+        // Convert all paths at directory to strings and save to array for display
         try (var stream = Files.list(directory)) {
             return stream.map(path -> path.getFileName().toString()).toArray(String[]::new);
         } catch (IOException ex) {
