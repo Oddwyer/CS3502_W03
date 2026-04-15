@@ -3,7 +3,6 @@
 // Project 3: File Manager - FileMakerWindow (GUI Logic)
 
 // Window and button GUI imports
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -12,9 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-// Extends JFrame and instantiates GUI frame and layouts for file directory window. Keeps GUI logic
-
-// separate from file (domain) logic for clear separation of concerns.
+/* Extends JFrame and instantiates GUI frame and layouts for file directory window. Keeps GUI logic
+separate from file (domain) logic for clear separation of concerns.*/
 
 public class FileMakerWindow extends JFrame {
 
@@ -46,12 +44,23 @@ public class FileMakerWindow extends JFrame {
     public FileMakerWindow(FileManager fileManager) {
         super("File Manager"); // Title bar text
         this.fileManager = fileManager;
+        initState();
+        initComponents();
+        initLayout();
+        initListeners();
+    }
+
+//============================================== Window Helpers ============================================
+    // Window state initialization
+    private void initState() {
         // Invoke fileManager for a path string and convert to a Path.
         currentPath = Paths.get(fileManager.getCurrentPath());
+    }
+
+    // Window components initialization
+    private void initComponents() {
         pathLabel = new JLabel("Path: " + currentPath);
         fileList = new JList<>(fileManager.getFiles(currentPath));
-        enableDoubleClick();
-        displayMetadata();
 
         // Window properties + layout
         textArea = new JTextArea(10, 30);
@@ -73,6 +82,10 @@ public class FileMakerWindow extends JFrame {
         deleteButton = new JButton("Delete");
         renameButton = new JButton("Rename");
         upButton = new JButton("Up");
+    }
+
+    // Window layout initialization
+    private void initLayout() {
         setLayout(new BorderLayout()); // Simple layout
         setSize(700, 400); // Window size
         label.setHorizontalAlignment(SwingConstants.CENTER);
@@ -89,7 +102,12 @@ public class FileMakerWindow extends JFrame {
         add(bottomPanel, BorderLayout.SOUTH);
     }
 
-    //============================================== Helpers ============================================
+    // Window listeners initialization
+    private void initListeners() {
+        enableDoubleClick();
+        enableContextMenu();
+        displayMetadata();
+    }
 
     // TOP PANEL: Displays current directory path
     private JPanel createTopPanel() {
@@ -152,44 +170,6 @@ public class FileMakerWindow extends JFrame {
         fileList.setListData(fileManager.getFiles(currentPath));
     }
 
-    // Displays metadata when file / directory is selected in list
-    private void displayMetadata() {
-        fileList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                String selected = fileList.getSelectedValue();
-
-                // If selected or current path is null, return error
-                if (selected == null || currentPath == null) {
-                    setStatus("No item selected.");
-                } // Do not replace file contents while editing an opened file
-                else if (currentFile != null && isEditing) {
-                    setStatus("Cannot display metadata while editing a file. Save changes first.");
-                } // If not editing an opened file, reset state and display metadata
-                else {
-                    Path selectedPath = currentPath.resolve(selected);
-
-                    // Reset state
-                    currentFile = null;
-                    textArea.setEditable(false);
-                    isEditing = false;
-                    updateButton.setText("Update File");
-                    textArea.setText("");
-
-                    // Invoke FileManager's getMetadata method
-                    result = fileManager.getMetadata(selectedPath);
-
-                    // If metadata retrieval successful, display metadata and update state
-                    if (result.isSuccess()) {
-                        textArea.setText(result.getContent());
-                        setStatus(result.getMessage());
-                    } else {
-                        setStatus(result.getMessage());
-                    }
-                }
-            }
-        });
-    }
-
     // Wraps status label text
     private void setStatus(String message) {
         label.setText("<html><div style='width: 300px; text-align: center;'>"
@@ -197,7 +177,7 @@ public class FileMakerWindow extends JFrame {
                 "</div></html>");
     }
 
-    //============================================== CRUD ============================================
+//============================================== CRUD ============================================
 
     // createFileButton action: creates a new file
     private void createFile() {
@@ -248,6 +228,95 @@ public class FileMakerWindow extends JFrame {
         openButton.addActionListener(e -> openAction());
     }
 
+    // updateButton action: Save changes to the currently open file
+    private void updateFile() {
+        updateButton.addActionListener(e -> {
+            // If no file is open, return error
+            if (currentFile == null) {
+                setStatus("No file open.");
+            } // If file is open, but not being edited, switch to editing state
+            else if (!isEditing) {
+                textArea.setEditable(true);
+                isEditing = true;
+                updateButton.setText("Save File");
+                setStatus("Editing: " + currentFile.getFileName());
+            } // Save new content, invoke FileManager's updateFile method, display results
+            else {
+                String newContent = textArea.getText();
+                result = fileManager.updateFile(currentFile, newContent);
+                if (result.isSuccess()) {
+                    refreshDirectory();
+                    setStatus(result.getMessage());
+                    // Reset to default state
+                    updateButton.setText("Update File");
+                    textArea.setEditable(false);
+                    isEditing = false;
+                } else {
+                    setStatus(result.getMessage());
+                }
+            }
+        });
+    }
+
+    // renameButton action: invokes FileManager's renameFile method and displays result
+    private void renameItem() {
+        renameButton.addActionListener(e -> renameAction());
+    }
+
+    // deleteButton action: invokes FileManager's deleteITem method and displays result
+    private void deleteItem() {
+        deleteButton.addActionListener(e -> deleteAction());
+    }
+
+//======================================= CRUD Helpers ====================================
+
+    // deleteButton action: invokes FileManager's deleteITem method and displays result
+    private void deleteAction() {
+        // Save selected file name from list
+        String selected = fileList.getSelectedValue();
+
+        // If not valid selection, return error
+        if (selected == null) {
+            setStatus("No item selected.");
+        } // Do not delete file while editing another file
+        else if (currentFile != null && isEditing) {
+            setStatus("Save changes before performing this action.");
+        } // If valid selection, delete item
+        else {
+            // Save selected path
+            Path selectedPath = currentPath.resolve(selected);
+
+            // Display deletion confirmation dialog
+            int confirm = JOptionPane.showConfirmDialog(
+                    null,
+                    "Are you sure you want to delete: " + selected + "?",
+                    "Confirm Delete",
+                    JOptionPane.YES_NO_OPTION
+            );
+            if (confirm != JOptionPane.YES_OPTION) {
+                setStatus("Delete cancelled.");
+                return;
+            }
+
+            // If proceeding, invoke FileManager's deleteFile method and display results
+            result = fileManager.deleteItem(selectedPath);
+            if (result.isSuccess()) {
+                setStatus(result.getMessage());
+                refreshDirectory();
+                textArea.setText("");
+                // Reset to default state if currently open file was deleted file
+                if (selectedPath.equals(currentFile)) {
+                    currentFile = null;
+                    textArea.setEditable(false);
+                    isEditing = false;
+                    updateButton.setText("Update File");
+                }
+            } else {
+                setStatus(result.getMessage());
+            }
+        }
+    }
+
     // Opens a file for editing: used for openButton and enableDoubleClick
     private void openAction() {
         // Save selected file name from list
@@ -293,118 +362,76 @@ public class FileMakerWindow extends JFrame {
         }
     }
 
-    // updateButton action: Save changes to the currently open file
-    private void updateFile() {
-        updateButton.addActionListener(e -> {
-            // If no file is open, return error
-            if (currentFile == null) {
-                setStatus("No file open.");
-            } // If file is open, but not being edited, switch to editing state
-            else if (!isEditing) {
-                textArea.setEditable(true);
-                isEditing = true;
-                updateButton.setText("Save File");
-                setStatus("Editing: " + currentFile.getFileName());
-            } // Save new content, invoke FileManager's updateFile method, display results
-            else {
-                String newContent = textArea.getText();
-                result = fileManager.updateFile(currentFile, newContent);
+    // renameButton action: invokes FileManager's renameFile method and displays result
+    private void renameAction() {
+        String selected = fileList.getSelectedValue();
+
+        // If not valid selection, return error
+        if (selected == null) {
+            setStatus("No item selected.");
+        } // Do not rename file while editing another file
+        else if (currentFile != null && isEditing) {
+            setStatus("Save changes before performing this action.");
+        } // If valid selection, rename item
+        else {
+            // Save requested file name from pop-up input box
+            String fileName = javax.swing.JOptionPane.showInputDialog("Enter new file or directory name:");
+            // If renaming to same name, return error
+            if (selected.equals(fileName)) {
+                setStatus("New name is the same as the current name.");
+            }
+            // If new file name provided, create and save file path and rename file
+            else if (fileName != null && !fileName.isEmpty()) {
+                Path oldPath = currentPath.resolve(selected); // Save selected path
+                Path newPath = currentPath.resolve(fileName); // Save new path
+                result = fileManager.renameItem(oldPath, newPath);
                 if (result.isSuccess()) {
-                    refreshDirectory();
                     setStatus(result.getMessage());
-                    // Reset to default state
-                    updateButton.setText("Update File");
-                    textArea.setEditable(false);
-                    isEditing = false;
+                    refreshDirectory();
                 } else {
                     setStatus(result.getMessage());
                 }
+            } else {
+                setStatus("No name entered.");
             }
-        });
+        }
     }
 
-    // renameButton action: invokes FileManager's renameFile method and displays result
-    private void renameItem() {
-        renameButton.addActionListener(e -> {
-            // Save selected file name from list
-            String selected = fileList.getSelectedValue();
+//======================================= Additional Features ====================================
 
-            // If not valid selection, return error
-            if (selected == null) {
-                setStatus("No item selected.");
-            } // Do not rename file while editing another file
-            else if (currentFile != null && isEditing) {
-                setStatus("Save changes before performing this action.");
-            } // If valid selection, rename item
-            else {
-                // Save requested file name from pop-up input box
-                String fileName = javax.swing.JOptionPane.showInputDialog("Enter new file or directory name:");
-                // If renaming to same name, return error
-                if (selected.equals(fileName)) {
-                    setStatus("New name is the same as the current name.");
-                }
-                // If new file name provided, create and save file path and rename file
-                else if (fileName != null && !fileName.isEmpty()) {
-                    Path oldPath = currentPath.resolve(selected); // Save selected path
-                    Path newPath = currentPath.resolve(fileName); // Save new path
-                    result = fileManager.renameItem(oldPath, newPath);
+    // Displays metadata when file / directory is selected in list
+    private void displayMetadata() {
+        fileList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                String selected = fileList.getSelectedValue();
+
+                // If selected or current path is null, return error
+                if (selected == null || currentPath == null) {
+                    setStatus("No item selected.");
+                } // Do not replace file contents while editing an opened file
+                else if (currentFile != null && isEditing) {
+                    setStatus("Cannot display metadata while editing a file. Save changes first.");
+                } // If not editing an opened file, reset state and display metadata
+                else {
+                    Path selectedPath = currentPath.resolve(selected);
+
+                    // Reset state
+                    currentFile = null;
+                    textArea.setEditable(false);
+                    isEditing = false;
+                    updateButton.setText("Update File");
+                    textArea.setText("");
+
+                    // Invoke FileManager's getMetadata method
+                    result = fileManager.getMetadata(selectedPath);
+
+                    // If metadata retrieval successful, display metadata and update state
                     if (result.isSuccess()) {
+                        textArea.setText(result.getContent());
                         setStatus(result.getMessage());
-                        refreshDirectory();
                     } else {
                         setStatus(result.getMessage());
                     }
-                } else {
-                    setStatus("No name entered.");
-                }
-            }
-        });
-    }
-
-    // deleteButton action: invokes FileManager's deleteITem method and displays result
-    private void deleteItem() {
-        deleteButton.addActionListener(e -> {
-            // Save selected file name from list
-            String selected = fileList.getSelectedValue();
-
-            // If not valid selection, return error
-            if (selected == null) {
-                setStatus("No item selected.");
-            } // Do not delete file while editing another file
-            else if (currentFile != null && isEditing) {
-                setStatus("Save changes before performing this action.");
-            } // If valid selection, delete item
-            else {
-                // Save selected path
-                Path selectedPath = currentPath.resolve(selected);
-
-                // Display deletion confirmation dialog
-                int confirm = JOptionPane.showConfirmDialog(
-                        null,
-                        "Are you sure you want to delete: " + selected + "?",
-                        "Confirm Delete",
-                        JOptionPane.YES_NO_OPTION
-                );
-                if (confirm != JOptionPane.YES_OPTION) {
-                    setStatus("Delete cancelled.");
-                    return;
-                }
-
-                // If proceeding, invoke FileManager's deleteFile method and display results
-                result = fileManager.deleteItem(selectedPath);
-                if (result.isSuccess()) {
-                    setStatus(result.getMessage());
-                    refreshDirectory();
-                    textArea.setText("");
-                    // Reset to default state if currently open file was deleted file
-                    if (selectedPath.equals(currentFile)) {
-                        currentFile = null;
-                        textArea.setEditable(false);
-                        isEditing = false;
-                        updateButton.setText("Update File");
-                    }
-                } else {
-                    setStatus(result.getMessage());
                 }
             }
         });
@@ -435,8 +462,6 @@ public class FileMakerWindow extends JFrame {
         });
     }
 
-//======================================= Additional Features ====================================
-
     // Double-click action: navigates into directories or opens a file for editing
     private void enableDoubleClick() {
         fileList.addMouseListener(new MouseAdapter() {
@@ -445,6 +470,49 @@ public class FileMakerWindow extends JFrame {
                 if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
                     openAction();
                 }
+            }
+        });
+    }
+
+    // Context Menu: Right-click to permit open, rename, delete
+    private void enableContextMenu() {
+        // Create menu and menu items
+        JPopupMenu menu = new JPopupMenu();
+        JMenuItem openItem = new JMenuItem("Open");
+        JMenuItem renameItem = new JMenuItem("Rename");
+        JMenuItem deleteItem = new JMenuItem("Delete");
+
+        // Add action listeners to menu items
+        openItem.addActionListener(e -> openAction());
+        renameItem.addActionListener(e -> renameAction());
+        deleteItem.addActionListener(e -> deleteAction());
+
+        // Add menu items to menu
+        menu.add(openItem);
+        menu.add(renameItem);
+        menu.add(deleteItem);
+
+        // Add mouse listener to file list to display menu
+        fileList.addMouseListener(new MouseAdapter() {
+            private void showMenu(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    int index = fileList.locationToIndex(e.getPoint());
+
+                    if (index != -1) {
+                        fileList.setSelectedIndex(index);
+                        menu.show(fileList, e.getX(), e.getY());
+                    }
+                }
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                showMenu(e);
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                showMenu(e);
             }
         });
     }
