@@ -391,7 +391,7 @@ public class FileMakerWindow extends JFrame {
 
         // Rename item:
         // 1. Save requested file name from pop-up input box
-        String fileName = javax.swing.JOptionPane.showInputDialog("Enter new file or directory name:");
+        String fileName = JOptionPane.showInputDialog("Enter new file or directory name:");
 
         // 2. If renaming to same name, return error
         if (selected.equals(fileName)) {

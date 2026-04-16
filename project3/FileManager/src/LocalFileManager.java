@@ -191,7 +191,6 @@ public class LocalFileManager implements FileManager {
         }
         // If file or directory exists, delete it
         try {
-
             Files.delete(selected);
             return new OperationResult(true, "Deleted: " + selected.getFileName(), content);
         } // If ENOENT
@@ -224,7 +223,8 @@ public class LocalFileManager implements FileManager {
         // If oldPath and newPath are valid, attempt to rename file by moving path
         try {
             Files.move(oldPath, newPath);
-            return new OperationResult(true, "Renamed: " + oldPath.getFileName() + " to " + newPath.getFileName(), content);
+            return new OperationResult(true, "Renamed: " + oldPath.getFileName() + " to "
+                    + newPath.getFileName(), content);
         } // If ENOENT
         catch (NoSuchFileException ex) {
             return new OperationResult(false, "File or directory not found.", content);
