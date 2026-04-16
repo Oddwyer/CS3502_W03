@@ -20,53 +20,22 @@ public class LocalFileManager implements FileManager {
         return System.getProperty("user.dir");
     }
 
-    /* Copies file from source to destination and returns whether successful along with feedback message*/
-    public OperationResult copyFile(Path source, Path destination) {
-        String content = "";
-
-        // If source or destination is null, return error
-        if(source == null || destination == null) {
-            return new OperationResult(false, "Source or destination path is missing.", content);
-        } // If directory is not valid, return error
-        if(!Files.isDirectory(destination)) {
-            return new OperationResult(false, "Destination is not valid.", content);
-        } // If file does not exist, return error
-        if(!Files.exists(source)){
-            return new OperationResult(false, "Source file does not exist.", content);
-        }
-        // If file exists, is valid, and destination is valid, copy file
-        try {
-            // Create a path to: destination / filename
-            Path copyPath = destination.resolve(source.getFileName());
-            // Copy file to destination
-            Files.copy(source, copyPath);
-            return new OperationResult(true, "File copied successfully.", content);
-        }  // If EEXIST
-        catch (FileAlreadyExistsException ex) {
-            return new OperationResult(false, "File already exists at destination.", content);
-        } // If EACCES
-        catch (AccessDeniedException ex) {
-            return new OperationResult(false, "Permission denied.", content);
-        } // If other error
-        catch (IOException e) {
-            return new OperationResult(false, "Failed to copy file: " + e.getMessage(), content);
-        }
-    }
-
-    //============================================== CRUD Logic ============================================
+    //============================================ CRUD Logic ==========================================
 
     /* Creates file at given location with given name and returns whether  file creation was successful
     along with feedback message*/
     public OperationResult createFile(Path directory, String fileName) {
         String content = "";
 
-        // If directory or file name is missing, return error
+        // If directory or file name is missing or invalid, return errors
         if (directory == null || fileName == null || fileName.isBlank()) {
             return new OperationResult(false, "File name is missing.", content);
         }
         if (!Files.isDirectory(directory)) {
             return new OperationResult(false, "Directory path is not valid.", content);
         }
+
+        // If valid name and directory, create file
         try {
             // Create a path to: current path / fileName
             Path newFile = directory.resolve(fileName);
@@ -112,6 +81,8 @@ public class LocalFileManager implements FileManager {
         if (!Files.isDirectory(directory)) {
             return new OperationResult(false, "Directory path is not valid.", content);
         }
+
+        // If valid name and directory, create directory
         try {
             // Create a path pointer to: current path / directory
             Path newDirectory = directory.resolve(folderName);
@@ -150,31 +121,30 @@ public class LocalFileManager implements FileManager {
     public OperationResult readFile(Path selected) {
         String content = "";
 
-        // If selected path is null, return error
+        // If selected path is null or a directory, return errors
         if (selected == null) {
             return new OperationResult(false, "No file selected.", content);
-        } // If selected path is a directory, return error
-        else if (Files.isDirectory(selected)) {
+        }
+        if (Files.isDirectory(selected)) {
             return new OperationResult(false, "Cannot read a directory.", content);
-        } // If selected path is a file, read file content
-        else {
-            try {
-                // Save content by reading entire file available at the selected path
-                content = Files.readString(selected);
-                return new OperationResult(true, "Opened file: " + selected.getFileName(), content);
-            } // If ENOENT
-            catch (NoSuchFileException ex) {
-                return new OperationResult(false, "File not found.", content);
-            } // If EACCES
-            catch (AccessDeniedException ex) {
-                return new OperationResult(false, "Permission denied.", content);
-            }// If EBUSY or invalid (too long, illegal characters)
-            catch (FileSystemException ex) {
-                return new OperationResult(false, "File system error: " + ex.getMessage(), content);
-            } // If other error
-            catch (IOException ex) {
-                return new OperationResult(false, "Error reading file: " + ex.getMessage(), content);
-            }
+        }
+        // If selected path is a file, read file content
+        try {
+            // Save content by reading entire file available at the selected path
+            content = Files.readString(selected);
+            return new OperationResult(true, "Opened file: " + selected.getFileName(), content);
+        } // If ENOENT
+        catch (NoSuchFileException ex) {
+            return new OperationResult(false, "File not found.", content);
+        } // If EACCES
+        catch (AccessDeniedException ex) {
+            return new OperationResult(false, "Permission denied.", content);
+        }// If EBUSY or invalid (too long, illegal characters)
+        catch (FileSystemException ex) {
+            return new OperationResult(false, "File system error: " + ex.getMessage(), content);
+        } // If other error
+        catch (IOException ex) {
+            return new OperationResult(false, "Error reading file: " + ex.getMessage(), content);
         }
     }
 
@@ -185,32 +155,32 @@ public class LocalFileManager implements FileManager {
         // If selected path is null, return error
         if (selected == null) {
             return new OperationResult(false, "No file selected.", content);
-        } else {
-            try {
-                // Check existence first so missing files are not misreported as non-writable.
-                if (!Files.exists(selected)) {
-                    return new OperationResult(false, "File not found.", content);
-                } // Check if file is a directory
-                else if (Files.isDirectory(selected)) {
-                    return new OperationResult(false, "Cannot update a directory.", content);
-                } // Check if file is writable
-                else if (!Files.isWritable(selected)) {
-                    return new OperationResult(false, "File is read-only or not writable.", content);
-                } // Attempt to update file: erase old content and replace with revised/new content
-                else {
-                    Files.writeString(selected, newContent, StandardOpenOption.TRUNCATE_EXISTING);
-                    return new OperationResult(true, "Updated: " + selected.getFileName(), content);
-                }
-            }  // If EACCES
-            catch (AccessDeniedException ex) {
-                return new OperationResult(false, "Permission denied.", content);
-            } // If EBUSY or invalid (too long, illegal characters)
-            catch (FileSystemException ex) {
-                return new OperationResult(false, "File system error: " + ex.getMessage(), content);
-            } // If other error
-            catch (IOException ex) {
-                return new OperationResult(false, "Could not update file: " + ex.getMessage(), content);
-            }
+        }
+        // Check existence first so missing files are not misreported as non-writable.
+        if (!Files.exists(selected)) {
+            return new OperationResult(false, "File not found.", content);
+        } // Check if file is a directory
+        if (Files.isDirectory(selected)) {
+            return new OperationResult(false, "Cannot update a directory.", content);
+        } // Check if file is writable
+        if (!Files.isWritable(selected)) {
+            return new OperationResult(false, "File is read-only or not writable.", content);
+        }
+
+        // If selected is valid, update file content
+        try {
+            // Attempt to update file: erase old content and replace with revised/new content
+            Files.writeString(selected, newContent, StandardOpenOption.TRUNCATE_EXISTING);
+            return new OperationResult(true, "Updated: " + selected.getFileName(), content);
+        }  // If EACCES
+        catch (AccessDeniedException ex) {
+            return new OperationResult(false, "Permission denied.", content);
+        } // If EBUSY or invalid (too long, illegal characters)
+        catch (FileSystemException ex) {
+            return new OperationResult(false, "File system error: " + ex.getMessage(), content);
+        } // If other error
+        catch (IOException ex) {
+            return new OperationResult(false, "Could not update file: " + ex.getMessage(), content);
         }
     }
 
@@ -220,28 +190,28 @@ public class LocalFileManager implements FileManager {
 
         if (selected == null) {
             return new OperationResult(false, "No item selected.", content);
-        } else {
-            try {
-                // If file or directory exists, delete it
-                Files.delete(selected);
-                return new OperationResult(true, "Deleted: " + selected.getFileName(), content);
-            } // If ENOENT
-            catch (NoSuchFileException ex) {
-                return new OperationResult(false, "File or directory not found.", content);
-            } // If ENOTEMPTY
-            catch (DirectoryNotEmptyException ex) {
-                return new OperationResult(false, "Cannot delete a non-empty directory.", content);
-            } // If EACCES
-            catch (AccessDeniedException ex) {
-                return new OperationResult(false, "Permission denied.", content);
-            } // If EBUSY or invalid (too long, illegal characters)
-            catch (FileSystemException ex) {
-                return new OperationResult(false, "File system error: " + ex.getMessage(), content);
-            }
-            // If other error
-            catch (IOException ex) {
-                return new OperationResult(false, "Could not delete item: " + ex.getMessage(), content);
-            }
+        }
+        // If file or directory exists, delete it
+        try {
+
+            Files.delete(selected);
+            return new OperationResult(true, "Deleted: " + selected.getFileName(), content);
+        } // If ENOENT
+        catch (NoSuchFileException ex) {
+            return new OperationResult(false, "File or directory not found.", content);
+        } // If ENOTEMPTY
+        catch (DirectoryNotEmptyException ex) {
+            return new OperationResult(false, "Cannot delete a non-empty directory.", content);
+        } // If EACCES
+        catch (AccessDeniedException ex) {
+            return new OperationResult(false, "Permission denied.", content);
+        } // If EBUSY or invalid (too long, illegal characters)
+        catch (FileSystemException ex) {
+            return new OperationResult(false, "File system error: " + ex.getMessage(), content);
+        }
+        // If other error
+        catch (IOException ex) {
+            return new OperationResult(false, "Could not delete item: " + ex.getMessage(), content);
         }
     }
 
@@ -252,72 +222,37 @@ public class LocalFileManager implements FileManager {
         // If old or new path is null, return error
         if (oldPath == null || newPath == null) {
             return new OperationResult(false, "No item selected.", content);
-        } else {
-            try {
-                // Attempt to rename file by moving path; must be done atomically
-                Files.move(oldPath, newPath);
-                return new OperationResult(true, "Renamed: " + oldPath.getFileName() + " to " + newPath.getFileName(), content);
-            } // If ENOENT
-            catch (NoSuchFileException ex) {
-                return new OperationResult(false, "File or directory not found.", content);
-            } // If EEXIST
-            catch (FileAlreadyExistsException ex) {
-                return new OperationResult(false, "File or directory already exists.", content);
-            } // If EACCES
-            catch (AccessDeniedException ex) {
-                return new OperationResult(false, "Permission denied.", content);
-            } // If EBUSY or invalid (too long, illegal characters)
-            catch (FileSystemException ex) {
-                String details = ex.getMessage();
-
-                // Checks error message for invalid path or too long path and updates message accordingly
-                if (details != null) {
-                    String lower = details.toLowerCase();
-                    if (lower.contains("too long")) {
-                        return new OperationResult(false, "File path is too long.", content);
-                    }
-                    if (lower.contains("invalid")) {
-                        return new OperationResult(false, "Invalid file name or path.", content);
-                    }
-                }
-                return new OperationResult(false, "File system error: " + details, content);
-
-            } // If other error
-            catch (IOException ex) {
-                return new OperationResult(false, "Could not rename item: " + ex.getMessage(), content);
-            }
         }
-    }
-
-    /* If file or directory exists, displays metadata*/
-    public OperationResult getMetadata(Path selected) {
-        String content = "";
-
-        // If selected path is null, return error
-        if (selected == null) {
-            return new OperationResult(false, "No item selected.", "");
-        } else {
-            // Error handling
-            try {
-                // Check existence first to avoid multiple exceptions from metadata calls
-                if (!Files.exists(selected)) {
-                    return new OperationResult(false, "File or directory not found.", content);
-                } // Check if a file or directory and provide metadata accordingly
-                else {
-                    if (!Files.isDirectory(selected)) {
-                        content += "Size: " + Files.size(selected) + " bytes\n";
-                    }
-                    content += "Owner: " + Files.getOwner(selected) + "\n";
-                    content += "Last Modified: " + Files.getLastModifiedTime(selected) + "\n";
-                    content += "Readable: " + Files.isReadable(selected) + "\n";
-                    content += "Writable: " + Files.isWritable(selected) + "\n";
-                    content += "Type: " + (Files.isDirectory(selected) ? "Directory" : "File");
-
-                    return new OperationResult(true, "Metadata loaded.", content);
+        // If oldPath and newPath are valid, attempt to rename file by moving path
+        try {
+            Files.move(oldPath, newPath);
+            return new OperationResult(true, "Renamed: " + oldPath.getFileName() + " to " + newPath.getFileName(), content);
+        } // If ENOENT
+        catch (NoSuchFileException ex) {
+            return new OperationResult(false, "File or directory not found.", content);
+        } // If EEXIST
+        catch (FileAlreadyExistsException ex) {
+            return new OperationResult(false, "File or directory already exists.", content);
+        } // If EACCES
+        catch (AccessDeniedException ex) {
+            return new OperationResult(false, "Permission denied.", content);
+        } // If EBUSY or invalid (too long, illegal characters)
+        catch (FileSystemException ex) {
+            String details = ex.getMessage();
+            // Checks error message for invalid path or too long path and updates message accordingly
+            if (details != null) {
+                String lower = details.toLowerCase();
+                if (lower.contains("too long")) {
+                    return new OperationResult(false, "File path is too long.", content);
                 }
-            } catch (IOException ex) {
-                return new OperationResult(false, "Could not retrieve metadata: " + ex.getMessage(), content);
+                if (lower.contains("invalid")) {
+                    return new OperationResult(false, "Invalid file name or path.", content);
+                }
             }
+            return new OperationResult(false, "File system error: " + details, content);
+        } // If other error
+        catch (IOException ex) {
+            return new OperationResult(false, "Could not rename item: " + ex.getMessage(), content);
         }
     }
 
@@ -330,6 +265,86 @@ public class LocalFileManager implements FileManager {
             return stream.map(path -> path.getFileName().toString()).toArray(String[]::new);
         } catch (IOException ex) {
             return new String[0];
+        }
+    }
+
+    //======================================== Additional Features ======================================
+
+    /* If file or directory exists, displays metadata*/
+    public OperationResult getMetadata(Path selected) {
+        String content = "";
+
+        // If selected path is null, return error
+        if (selected == null) {
+            return new OperationResult(false, "No item selected.", "");
+        }
+        // Check existence first to avoid multiple exceptions from metadata calls
+        if (!Files.exists(selected)) {
+            return new OperationResult(false, "File or directory not found.", content);
+        }
+        // Check if a file or directory and provide metadata accordingly
+        try {
+            if (!Files.isDirectory(selected)) {
+                content += "Size: " + Files.size(selected) + " bytes\n";
+            }
+            content += "Owner: " + Files.getOwner(selected) + "\n";
+            content += "Last Modified: " + Files.getLastModifiedTime(selected) + "\n";
+            content += "Readable: " + Files.isReadable(selected) + "\n";
+            content += "Writable: " + Files.isWritable(selected) + "\n";
+            content += "Type: " + (Files.isDirectory(selected) ? "Directory" : "File");
+
+            return new OperationResult(true, "Metadata loaded.", content);
+        } catch (IOException ex) {
+            return new OperationResult(false, "Could not retrieve metadata: " + ex.getMessage(), content);
+        }
+    }
+
+    /* Copies file from source to destination and returns whether successful along with feedback message*/
+    public OperationResult copyFile(Path source, Path destination) {
+        String content = "";
+
+        // If source or destination is null, return error
+        if (source == null || destination == null) {
+            return new OperationResult(false, "Source or destination path is missing.", content);
+        } // If directory is not valid, return error
+        if (!Files.isDirectory(destination)) {
+            return new OperationResult(false, "Destination is not valid.", content);
+        } // If file does not exist, return error
+        if (!Files.exists(source)) {
+            return new OperationResult(false, "Source file does not exist.", content);
+        }
+        // If file exists, is valid, and destination is valid, copy file
+        try {
+            // Create a path to: destination / filename
+            Path copyPath = destination.resolve(source.getFileName());
+            // Copy file to destination
+            Files.copy(source, copyPath);
+            return new OperationResult(true, "File copied successfully.", content);
+        }  // If EEXIST
+        catch (FileAlreadyExistsException ex) {
+            return new OperationResult(false, "File already exists at destination.", content);
+        } // If EACCES
+        catch (AccessDeniedException ex) {
+            return new OperationResult(false, "Permission denied.", content);
+        }  // If EBUSY or invalid (too long, illegal characters)
+        catch (FileSystemException ex) {
+            String details = ex.getMessage();
+
+            // Checks error message for invalid path or too long path and updates message accordingly
+            if (details != null) {
+                String lower = details.toLowerCase();
+                if (lower.contains("too long")) {
+                    return new OperationResult(false, "File path is too long.", content);
+                }
+                if (lower.contains("invalid")) {
+                    return new OperationResult(false, "Invalid file name or path.", content);
+                }
+            }
+            return new OperationResult(false, "File system error: " + details, content);
+        }
+        // If other error
+        catch (IOException e) {
+            return new OperationResult(false, "Failed to copy file: " + e.getMessage(), content);
         }
     }
 }

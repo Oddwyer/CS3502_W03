@@ -3,6 +3,7 @@
 // Project 3: File Manager - FileMakerWindow (GUI Logic)
 
 // Window and button GUI imports
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -53,6 +54,7 @@ public class FileMakerWindow extends JFrame {
     }
 
     //============================================== Window Helpers ============================================
+
     // Window state initialization
     private void initState() {
         // Invoke fileManager for a path string and convert to a Path.
@@ -179,7 +181,7 @@ public class FileMakerWindow extends JFrame {
                 "</div></html>");
     }
 
-//============================================== CRUD ============================================
+    //============================================== CRUD ============================================
 
     // createFileButton action: creates a new file
     private void createFile() {
@@ -187,18 +189,18 @@ public class FileMakerWindow extends JFrame {
             // Save requested file name from pop-up input box
             String fileName = JOptionPane.showInputDialog("Enter file name:");
 
-            // If file name is provided, create file
-            if (fileName != null && !fileName.isEmpty()) {
-                // Invoke FileManager's createFile method and displays results
-                result = fileManager.createFile(currentPath, fileName);
-                if (result.isSuccess()) {
-                    setStatus(result.getMessage());
-                    refreshDirectory();
-                } else {
-                    setStatus(result.getMessage());
-                }
-            } else {
+            // If no file name provided, return error
+            if (fileName == null || fileName.isEmpty()) {
                 setStatus("No file name entered.");
+                return;
+            }
+            // Invoke FileManager's createFile method and displays results
+            result = fileManager.createFile(currentPath, fileName);
+            if (result.isSuccess()) {
+                setStatus(result.getMessage());
+                refreshDirectory();
+            } else {
+                setStatus(result.getMessage());
             }
         });
     }
@@ -209,18 +211,18 @@ public class FileMakerWindow extends JFrame {
             // Save requested file name from pop-up input box
             String folderName = JOptionPane.showInputDialog("Enter directory name:");
 
-            // If directory name provided, create directory
-            if (folderName != null && !folderName.isEmpty()) {
-                // Invoke FileManager's createDirectory method and displays results
-                result = fileManager.createDirectory(currentPath, folderName);
-                if (result.isSuccess()) {
-                    setStatus(result.getMessage());
-                    refreshDirectory();
-                } else {
-                    setStatus(result.getMessage());
-                }
-            } else {
+            // If directory name not provided, return error
+            if (folderName == null || folderName.isEmpty()) {
                 setStatus("No directory name entered.");
+                return;
+            }
+            // Invoke FileManager's createDirectory method and displays results
+            result = fileManager.createDirectory(currentPath, folderName);
+            if (result.isSuccess()) {
+                setStatus(result.getMessage());
+                refreshDirectory();
+            } else {
+                setStatus(result.getMessage());
             }
         });
     }
@@ -236,26 +238,27 @@ public class FileMakerWindow extends JFrame {
             // If no file is open, return error
             if (currentFile == null) {
                 setStatus("No file open.");
-            } // If file is open, but not being edited, switch to editing state
-            else if (!isEditing) {
+                return;
+            }
+            // If file is open, but not being edited, switch to editing state
+            if (!isEditing) {
                 textArea.setEditable(true);
                 isEditing = true;
                 updateButton.setText("Save File");
                 setStatus("Editing: " + currentFile.getFileName());
-            } // Save new content, invoke FileManager's updateFile method, display results
-            else {
-                String newContent = textArea.getText();
-                result = fileManager.updateFile(currentFile, newContent);
-                if (result.isSuccess()) {
-                    refreshDirectory();
-                    setStatus(result.getMessage());
-                    // Reset to default state
-                    updateButton.setText("Update File");
-                    textArea.setEditable(false);
-                    isEditing = false;
-                } else {
-                    setStatus(result.getMessage());
-                }
+            }
+            // Save new content, invoke FileManager's updateFile method, display results
+            String newContent = textArea.getText();
+            result = fileManager.updateFile(currentFile, newContent);
+            if (result.isSuccess()) {
+                refreshDirectory();
+                setStatus(result.getMessage());
+                // Reset to default state
+                updateButton.setText("Update File");
+                textArea.setEditable(false);
+                isEditing = false;
+            } else {
+                setStatus(result.getMessage());
             }
         });
     }
@@ -270,7 +273,7 @@ public class FileMakerWindow extends JFrame {
         deleteButton.addActionListener(e -> deleteAction());
     }
 
-//======================================= CRUD Helpers ====================================
+    //======================================= CRUD Helpers ====================================
 
     // deleteButton action: invokes FileManager's deleteITem method and displays result
     private void deleteAction() {
@@ -280,42 +283,47 @@ public class FileMakerWindow extends JFrame {
         // If not valid selection, return error
         if (selected == null) {
             setStatus("No item selected.");
-        } // Do not delete file while editing another file
-        else if (currentFile != null && isEditing) {
+            return;
+        }
+
+        // Do not delete file while editing another file
+        if (currentFile != null && isEditing) {
             setStatus("Save changes before performing this action.");
-        } // If valid selection, delete item
-        else {
-            // Save selected path
-            Path selectedPath = currentPath.resolve(selected);
+            return;
 
-            // Display deletion confirmation dialog
-            int confirm = JOptionPane.showConfirmDialog(
-                    null,
-                    "Are you sure you want to delete: " + selected + "?",
-                    "Confirm Delete",
-                    JOptionPane.YES_NO_OPTION
-            );
-            if (confirm != JOptionPane.YES_OPTION) {
-                setStatus("Delete cancelled.");
-                return;
-            }
+        }
+        // If valid selection, delete item:
+        // 1. Save selected path
+        Path selectedPath = currentPath.resolve(selected);
 
-            // If proceeding, invoke FileManager's deleteFile method and display results
-            result = fileManager.deleteItem(selectedPath);
-            if (result.isSuccess()) {
-                setStatus(result.getMessage());
-                refreshDirectory();
-                textArea.setText("");
-                // Reset to default state if currently open file was deleted file
-                if (selectedPath.equals(currentFile)) {
-                    currentFile = null;
-                    textArea.setEditable(false);
-                    isEditing = false;
-                    updateButton.setText("Update File");
-                }
-            } else {
-                setStatus(result.getMessage());
+        // 2. Display deletion confirmation dialog and proceed if confirmed
+        int confirm = JOptionPane.showConfirmDialog(
+                null,
+                "Are you sure you want to delete: " + selected + "?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION
+        ); // If user cancels, return
+        if (confirm != JOptionPane.YES_OPTION) {
+            setStatus("Delete cancelled.");
+            return;
+        }
+
+        // 3. If proceeding, invoke FileManager's deleteFile method and display results
+        result = fileManager.deleteItem(selectedPath);
+        if (result.isSuccess()) {
+            setStatus(result.getMessage());
+            refreshDirectory();
+            textArea.setText("");
+
+            // 4. If currently open file was deleted, reset to default state
+            if (selectedPath.equals(currentFile)) {
+                currentFile = null;
+                textArea.setEditable(false);
+                isEditing = false;
+                updateButton.setText("Update File");
             }
+        } else {
+            setStatus(result.getMessage());
         }
     }
 
@@ -327,40 +335,43 @@ public class FileMakerWindow extends JFrame {
         // If not valid selection, return error
         if (selected == null) {
             setStatus("No item selected.");
-        } // Do not open another file while in the process of editing another
-        else if (currentFile != null && isEditing) {
-            setStatus("Save changes before performing this action.");
+            return;
         }
-        // Open item
-        else {
-            // Create and save selected path
-            Path selectedPath = currentPath.resolve(selected);
 
-            // Reset to default state before switching to new directory or file
-            currentFile = null;
-            textArea.setEditable(false);
-            isEditing = false;
-            updateButton.setText("Update File");
+        // Do not open another file while in the process of editing another
+        if (currentFile != null && isEditing) {
+            setStatus("Save changes before performing this action.");
+            return;
+        }
 
-            // If a directory, enter it
-            if (Files.isDirectory(selectedPath)) {
-                currentPath = selectedPath; // Set current path
-                pathLabel.setText("Path: " + currentPath);
-                refreshDirectory();
-                textArea.setText("");
-                setStatus("Entered: " + selected);
-                return;
-            }
-            // If a file, invoke FileManager's readFile method and display results
-            result = fileManager.readFile(selectedPath);
-            if (result.isSuccess()) {
-                currentFile = selectedPath; // Set current file
-                textArea.setText(result.getContent());
-                setStatus(result.getMessage());
-            } else {
-                textArea.setText("");
-                setStatus(result.getMessage());
-            }
+        // Open item:
+        // 1. Create and save selected path
+        Path selectedPath = currentPath.resolve(selected);
+
+        // 2. Reset to default state before switching to new directory or file
+        currentFile = null;
+        textArea.setEditable(false);
+        isEditing = false;
+        updateButton.setText("Update File");
+
+        // 3.1 If a directory, enter it
+        if (Files.isDirectory(selectedPath)) {
+            currentPath = selectedPath; // Set current path
+            pathLabel.setText("Path: " + currentPath);
+            refreshDirectory();
+            textArea.setText("");
+            setStatus("Entered: " + selected);
+            return;
+        }
+        // 3.2 If a file, invoke FileManager's readFile method and display results
+        result = fileManager.readFile(selectedPath);
+        if (result.isSuccess()) {
+            currentFile = selectedPath; // Set current file
+            textArea.setText(result.getContent());
+            setStatus(result.getMessage());
+        } else {
+            textArea.setText("");
+            setStatus(result.getMessage());
         }
     }
 
@@ -371,35 +382,42 @@ public class FileMakerWindow extends JFrame {
         // If not valid selection, return error
         if (selected == null) {
             setStatus("No item selected.");
-        } // Do not rename file while editing another file
-        else if (currentFile != null && isEditing) {
+            return;
+        }
+
+        // Do not rename file while editing another file
+        if (currentFile != null && isEditing) {
             setStatus("Save changes before performing this action.");
-        } // If valid selection, rename item
-        else {
-            // Save requested file name from pop-up input box
-            String fileName = javax.swing.JOptionPane.showInputDialog("Enter new file or directory name:");
-            // If renaming to same name, return error
-            if (selected.equals(fileName)) {
-                setStatus("New name is the same as the current name.");
-            }
-            // If new file name provided, create and save file path and rename file
-            else if (fileName != null && !fileName.isEmpty()) {
-                Path oldPath = currentPath.resolve(selected); // Save selected path
-                Path newPath = currentPath.resolve(fileName); // Save new path
-                result = fileManager.renameItem(oldPath, newPath);
-                if (result.isSuccess()) {
-                    setStatus(result.getMessage());
-                    refreshDirectory();
-                } else {
-                    setStatus(result.getMessage());
-                }
+            return;
+        }
+
+        // Rename item:
+        // 1. Save requested file name from pop-up input box
+        String fileName = javax.swing.JOptionPane.showInputDialog("Enter new file or directory name:");
+
+        // 2. If renaming to same name, return error
+        if (selected.equals(fileName)) {
+            setStatus("New name is the same as the current name.");
+            return;
+        }
+
+        // 3. If new file name provided, create and save file path, and rename file
+        if (fileName != null && !fileName.isEmpty()) {
+            Path oldPath = currentPath.resolve(selected);
+            Path newPath = currentPath.resolve(fileName);
+            result = fileManager.renameItem(oldPath, newPath);
+            if (result.isSuccess()) {
+                setStatus(result.getMessage());
+                refreshDirectory();
             } else {
-                setStatus("No name entered.");
+                setStatus(result.getMessage());
             }
+        } else {
+            setStatus("No name entered.");
         }
     }
 
-//======================================= Additional Features ====================================
+    //======================================= Additional Features ====================================
 
     // Displays metadata when file / directory is selected in list
     private void displayMetadata() {
@@ -410,32 +428,36 @@ public class FileMakerWindow extends JFrame {
                 // If selected or current path is null, return error
                 if (selected == null || currentPath == null) {
                     setStatus("No item selected.");
-                } // Do not replace file contents while editing an opened file
-                else if (currentFile != null && isEditing) {
+                    return;
+                }
+
+                // Do not replace file contents while editing an opened file
+                if (currentFile != null && isEditing) {
                     setStatus("Cannot display metadata while editing a file. Save changes first.");
-                } // If not editing an opened file, reset state and display metadata
-                else {
-                    Path selectedPath = currentPath.resolve(selected);
+                    return;
+                }
 
-                    // Reset state
-                    currentFile = null;
-                    textArea.setEditable(false);
-                    isEditing = false;
-                    updateButton.setText("Update File");
-                    textArea.setText("");
+                // If not editing an opened file:
+                // 1. Save selected path
+                Path selectedPath = currentPath.resolve(selected);
 
-                    // Invoke FileManager's getMetadata method
-                    result = fileManager.getMetadata(selectedPath);
+                // 2. Reset state
+                currentFile = null;
+                textArea.setEditable(false);
+                isEditing = false;
+                updateButton.setText("Update File");
+                textArea.setText("");
 
-                    // If metadata retrieval successful, display metadata and update state
-                    if (result.isSuccess()) {
-                        textArea.setText(result.getContent());
-                        setStatus(result.getMessage());
-                    } else {
-                        setStatus(result.getMessage());
-                    }
+                // 3. Invoke FileManager's getMetadata method and display results
+                result = fileManager.getMetadata(selectedPath);
+                if (result.isSuccess()) {
+                    textArea.setText(result.getContent());
+                    setStatus(result.getMessage());
+                } else {
+                    setStatus(result.getMessage());
                 }
             }
+
         });
     }
 
@@ -449,18 +471,18 @@ public class FileMakerWindow extends JFrame {
             if (parent == null) {
                 setStatus("Already at directory root.");
                 return;
-                // If parent exists, set current path to parent and refresh to display parent directory
-            } else {
-                currentPath = parent;
-                pathLabel.setText("Path: " + currentPath);
-                // Reset current file and text area
-                currentFile = null;
-                textArea.setEditable(false);
-                updateButton.setText("Update File");
-                textArea.setText("");
-                refreshDirectory();
-                setStatus("Moved up a directory.");
             }
+            // If parent exists:
+            // 1. Set current path to parent
+            currentPath = parent;
+            pathLabel.setText("Path: " + currentPath);
+            // 2. Reset current file and text area for display
+            currentFile = null;
+            textArea.setEditable(false);
+            updateButton.setText("Update File");
+            textArea.setText("");
+            refreshDirectory();
+            setStatus("Moved up a directory.");
         });
     }
 
@@ -482,16 +504,23 @@ public class FileMakerWindow extends JFrame {
         JPopupMenu menu = new JPopupMenu();
         JMenuItem openItem = new JMenuItem("Open");
         JMenuItem renameItem = new JMenuItem("Rename");
+        JMenuItem copyItem = new JMenuItem("Copy");
+        JMenuItem pasteItem = new JMenuItem("Paste");
+        //pasteItem.setEnabled(clipboardPath != null);
         JMenuItem deleteItem = new JMenuItem("Delete");
 
         // Add action listeners to menu items
         openItem.addActionListener(e -> openAction());
         renameItem.addActionListener(e -> renameAction());
+        copyItem.addActionListener(e -> copyAction());
+        pasteItem.addActionListener(e -> pasteAction());
         deleteItem.addActionListener(e -> deleteAction());
 
         // Add menu items to menu
         menu.add(openItem);
         menu.add(renameItem);
+        menu.add(copyItem);
+        menu.add(pasteItem);
         menu.add(deleteItem);
 
         // Add mouse listener to file list to display menu
@@ -499,11 +528,8 @@ public class FileMakerWindow extends JFrame {
             private void showMenu(MouseEvent e) {
                 if (e.isPopupTrigger()) {
                     int index = fileList.locationToIndex(e.getPoint());
-
-                    if (index != -1) {
-                        fileList.setSelectedIndex(index);
-                        menu.show(fileList, e.getX(), e.getY());
-                    }
+                    fileList.setSelectedIndex(index);
+                    menu.show(fileList, e.getX(), e.getY());
                 }
             }
 
@@ -518,24 +544,54 @@ public class FileMakerWindow extends JFrame {
             }
         });
     }
-
-    // TODO: Implement copyAction method
+    
+    // copyAction: Copies the currently selected file to the clipboard
     private void copyAction() {
+        String selected = fileList.getSelectedValue();
 
-        // If no file is open, return error
-        if (currentFile == null) {
-            setStatus("No open file to copy.");
+        // If not valid selection, return error
+        if (selected == null) {
+            setStatus("No item selected.");
             return;
-        } // Do not allow copying while editing
+        }
+
+        // Do not allow copying while editing
         if (isEditing) {
             setStatus("Cannot copy while editing a file. Save changes first.");
             return;
         }
+
         // If file is open and not in edit mode, copy file to clipboard
-        clipboardPath = currentFile;
+        if (currentFile != null && !isEditing)
+            clipboardPath = currentFile;
         isCutOperation = false;
 
         setStatus("Copied: " + clipboardPath.getFileName());
+    }
+
+    // pasteAction: invokes FileManager's copyFile method and displays results
+    private void pasteAction() {
+
+        // If no file is open, return error
+        if (clipboardPath == null) {
+            setStatus("No copied file to paste.");
+            return;
+        }
+
+        // Do not allow copying while editing
+        if (isEditing) {
+            setStatus("Cannot paste while editing a file. Save changes first.");
+            return;
+        }
+
+        // Invoke copyFile to ensure file is copied to clipboard
+        result = fileManager.copyFile(clipboardPath, currentPath);
+        if (result.isSuccess()) {
+            setStatus(result.getMessage());
+            refreshDirectory();
+        } else {
+            setStatus(result.getMessage());
+        }
     }
 }
 
