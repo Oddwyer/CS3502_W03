@@ -20,4 +20,5 @@ public interface FileManager {
     public OperationResult updateFile(Path selected, String newContent);
     public OperationResult renameItem(Path selected, Path newPath);
     public OperationResult getMetadata(Path selected);
+    public OperationResult copyFile(Path source, Path destination);
 }

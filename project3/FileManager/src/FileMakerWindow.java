@@ -52,7 +52,7 @@ public class FileMakerWindow extends JFrame {
         initListeners();
     }
 
-//============================================== Window Helpers ============================================
+    //============================================== Window Helpers ============================================
     // Window state initialization
     private void initState() {
         // Invoke fileManager for a path string and convert to a Path.
@@ -520,22 +520,23 @@ public class FileMakerWindow extends JFrame {
     }
 
     // TODO: Implement copyAction method
-    /*private void copyAction(){
+    private void copyAction() {
 
-        // If no file is selected, return error
+        // If no file is open, return error
         if (currentFile == null) {
-            setStatus("No file selected to copy.");
+            setStatus("No open file to copy.");
             return;
-        } // Do not allow copying while editing another file
+        } // Do not allow copying while editing
         if (isEditing) {
-            setStatus("Finish editing before copying.");
+            setStatus("Cannot copy while editing a file. Save changes first.");
             return;
-        } // If file is selected, copy it to clipboard
+        }
+        // If file is open and not in edit mode, copy file to clipboard
+        clipboardPath = currentFile;
+        isCutOperation = false;
 
-            clipboardPath = currentFile.toPath();
-            isCutOperation = false;
-
-            setStatus("Copied: " + clipboardPath.getFileName());*/
+        setStatus("Copied: " + clipboardPath.getFileName());
+    }
 }
 
 

@@ -20,6 +20,39 @@ public class LocalFileManager implements FileManager {
         return System.getProperty("user.dir");
     }
 
+    /* Copies file from source to destination and returns whether successful along with feedback message*/
+    public OperationResult copyFile(Path source, Path destination) {
+        String content = "";
+
+        // If source or destination is null, return error
+        if(source == null || destination == null) {
+            return new OperationResult(false, "Source or destination path is missing.", content);
+        } // If directory is not valid, return error
+        if(!Files.isDirectory(destination)) {
+            return new OperationResult(false, "Destination is not valid.", content);
+        } // If file does not exist, return error
+        if(!Files.exists(source)){
+            return new OperationResult(false, "Source file does not exist.", content);
+        }
+        // If file exists, is valid, and destination is valid, copy file
+        try {
+            // Create a path to: destination / filename
+            Path copyPath = destination.resolve(source.getFileName());
+            // Copy file to destination
+            Files.copy(source, copyPath);
+            return new OperationResult(true, "File copied successfully.", content);
+        }  // If EEXIST
+        catch (FileAlreadyExistsException ex) {
+            return new OperationResult(false, "File already exists at destination.", content);
+        } // If EACCES
+        catch (AccessDeniedException ex) {
+            return new OperationResult(false, "Permission denied.", content);
+        } // If other error
+        catch (IOException e) {
+            return new OperationResult(false, "Failed to copy file: " + e.getMessage(), content);
+        }
+    }
+
     //============================================== CRUD Logic ============================================
 
     /* Creates file at given location with given name and returns whether  file creation was successful
