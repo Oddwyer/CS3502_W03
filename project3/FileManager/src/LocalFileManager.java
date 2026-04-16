@@ -1,15 +1,13 @@
 // Amber O'Dwyer
 // CS3502 - W07 | Operating Systems
-// Project 3: File Manager - FileManager (Domain Logic)
+// Project 3: File Manager - LocalFileManager Class (Domain Logic)
 
 // File logic imports
-
 import java.io.IOException;
 import java.nio.file.*;
 
-// Implements FileManager and handles all file logic. Keeps file (domain) logic separate from GUI logic for
-// clear separation of concerns.
-
+/* Implements FileManager and handles all file logic. Keeps file (domain) logic separate from GUI logic for
+clear separation of concerns.*/
 public class LocalFileManager implements FileManager {
 
     public LocalFileManager() {

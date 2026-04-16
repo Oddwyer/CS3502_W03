@@ -1,3 +1,6 @@
+// Amber O'Dwyer
+// CS3502 - W07 | Operating Systems
+// Project 3: File Manager - FileManager Interface (Domain Logic)
 
 // File logic imports
 import java.nio.file.Path;

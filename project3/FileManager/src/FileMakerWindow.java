@@ -3,7 +3,6 @@
 // Project 3: File Manager - FileMakerWindow (GUI Logic)
 
 // Window and button GUI imports
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
