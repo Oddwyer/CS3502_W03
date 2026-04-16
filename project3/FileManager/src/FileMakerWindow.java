@@ -37,7 +37,6 @@ public class FileMakerWindow extends JFrame {
     private Path currentPath; // Location in file system
     private Path currentFile; // Currently opened (active) file
     private Path clipboardPath;
-    private boolean isCutOperation = false;
     private boolean isEditing = false;
     private JList<String> fileList;
     private FileManager fileManager;
@@ -544,7 +543,7 @@ public class FileMakerWindow extends JFrame {
             }
         });
     }
-    
+
     // copyAction: Copies the currently selected file to the clipboard
     private void copyAction() {
         String selected = fileList.getSelectedValue();
@@ -561,11 +560,17 @@ public class FileMakerWindow extends JFrame {
             return;
         }
 
-        // If file is open and not in edit mode, copy file to clipboard
-        if (currentFile != null && !isEditing)
-            clipboardPath = currentFile;
-        isCutOperation = false;
+        // Create and save selected path
+        Path selectedPath = currentPath.resolve(selected);
 
+        // If a directory, cannot copy
+        if (Files.isDirectory(selectedPath)) {
+            setStatus("Cannot copy a directory.");
+            return;
+        }
+
+        // Save selected path to clipboard
+        clipboardPath = selectedPath;
         setStatus("Copied: " + clipboardPath.getFileName());
     }
 
