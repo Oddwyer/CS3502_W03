@@ -244,6 +244,7 @@ public class FileMakerWindow extends JFrame {
                 isEditing = true;
                 updateButton.setText("Save File");
                 setStatus("Editing: " + currentFile.getFileName());
+                return;
             }
             // Save new content, invoke FileManager's updateFile method, display results
             String newContent = textArea.getText();
